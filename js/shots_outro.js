@@ -22,7 +22,7 @@ function shotLake(t, lt, d) {
   // he looks towards her: a faint dotted line of sight (never reaches)
   const sk = easeIO(seg(t, 239.85, 242.3)); if (sk > 0) { const c = X.ctx, a = [P[0] - P[2] * .45, P[1] - P[2] * .05], b = OUT().her; for (let i = 0; i < 26 * sk; i++) { const u = i / 30; c.fillStyle = rgba(ZX.ink, .45); c.beginPath(); c.arc(lerp(a[0], b[0], u), lerp(a[1], b[1] - 60, u), 3, 0, TAU); c.fill(); } }
   X.mix = 1 - easeOut(seg(lt, 0, 1.3)); if (X.mix > 0) chorusDensity(235.77, 4.08, 4.08, 'R8', true);
-  X.lyr = {};
+  X.lyr = X.L ? {} : { y: HOR() - 230 };   // portrait: lyric sits in the sky, clear of his coat
 }
 // ---------- smoke: it reaches for her and holds her ----------
 function smokePath(t, k) { const P = OUT(), lip = [P.him[0] - P.him[2] * .42, P.him[1] + P.him[2] * .28], H = [P.her[0], P.her[1] - P.her[2] * 2], Q = [];
@@ -35,7 +35,7 @@ function shotSmoke(t, lt, d) {
   const k = easeOut(seg(lt, .2, d - .4)), Q = smokePath(t, k);
   if (Q.length > 2) { for (let j = 0; j < 3; j++) ink(Q.map(([x, y], i) => [x + j * 6, y + j * 10 + sin(i * .4 + t * 2 + j) * 6]), 7 - j * 2, { col: j ? '#B9BDBF' : '#9A9FA3', key: 'sm' + j, alpha: .8 - j * .2 });
     for (let i = 0; i < Q.length; i += 5) { const [x, y] = Q[i]; X.ctx.save(); X.ctx.globalAlpha = .35; wash(ellP(x, y, 30 + i, 18 + i * .4, 16), '#C6C8C5', { tex: .7, edge: 0 }); X.ctx.restore(); } }
-  X.lyr = {};
+  X.lyr = X.L ? {} : { y: HOR() - 230 };   // portrait: lyric sits in the sky, clear of his coat
 }
 // ---------- clouds: the smoke goes up and darkens the sky ----------
 function shotClouds(t, lt, d) {
@@ -44,7 +44,7 @@ function shotClouds(t, lt, d) {
   if (rise < 1) for (let j = 0; j < 2; j++) ink(Q.map(([x, y]) => [x, y - rise * O(400, 600)]), 6 - j * 2, { col: '#9A9FA3', key: 'sm' + j, alpha: (1 - rise) * .8 });
   const Cs = X.L ? [[420, 160, 1.6], [900, 110, 1.9], [1450, 170, 1.6], [700, 300, 1.2], [1200, 320, 1.1]] : [[240, 300, 1.2], [760, 240, 1.3], [500, 480, 1.1], [860, 560, .9]];
   Cs.forEach(([x, y, s], i) => cloud(x + sin(t * .2 + i) * 20, y + (1 - rise) * 200, s * rise, mixCol('#8C9196', '#4A5058', dk), .9 * rise, 'oc' + i));
-  X.lyr = {};
+  X.lyr = X.L ? {} : { y: HOR() - 230 };   // portrait: lyric sits in the sky, clear of his coat
 }
 // ---------- drops: one, then one more ----------
 const DROP_T = [251.46, 252.3, 253.0, 253.68, 254.17, 254.66, 255.14];
@@ -58,13 +58,13 @@ function dropsAt(t, list, col = '#4A5058') {
 function shotDrops(t, lt, d) {
   lake(t, 1); herFar(t); himOut(t, { look: .9, tilt: -.16, blink: blinkAt(t, [252.0, 254.3]) });
   dropsAt(t, DROP_T); if (lt > d - .8) rain(floor(60 * seg(lt, d - .8, d)), rgba('#4A5058', .7), 1, .14, 5);
-  X.lyr = {};
+  X.lyr = X.L ? {} : { y: HOR() - 230 };   // portrait: lyric sits in the sky, clear of his coat
 }
 // ---------- reflection: she breaks in the ripples ----------
 function shotReflect(t, lt, d) {
   const c = X.ctx, V0 = X.VIS, h = HOR(), P = OUT().her;
   lake(t, 1); rain(80, rgba('#4A5058', .65), 1, .14, 5);
-  const g = easeIO(seg(lt, 0, 1.2)), s = lerp(P[2], O(130, 130), g), x = lerp(P[0], O(700, 400), g), fy = h - 3.25 * s + 3;
+  const g = easeIO(seg(lt, 0, 1.2)), s = lerp(P[2], O(130, 130), g), x = lerp(P[0], O(700, 820), g), fy = h - 3.25 * s + 3;
   // her reflection: the same figure mirrored at the waterline, sliced and shifted by ripples; it breaks on 看不清
   const br = easeIn(seg(t, 257.0, 259.2)), band = s * .16;
   for (let i = 0; i < 22; i++) { const y0 = h + i * band; if (y0 > h + 3.4 * s) break; const sh = sin(i * 1.7 + t * 4) * (3 + br * 50) * (1 + i * .12);
@@ -73,7 +73,7 @@ function shotReflect(t, lt, d) {
   figure({ who: 'her', x, y: fy, s, dir: 1, body: 'herBody', blink: blinkAt(t, [257.2]), look: -.2 });
   for (let i = 0; i < 4; i++) { const ph = (t * .5 + i * .25) % 1; ripple(x + (i - 1.5) * s * .6, h + s * (.5 + i * .6), s * (.5 + ph * 1.4) * (1 + br), (1 - ph) * .9, 'rr' + i); }
   dropsAt(t, [255.9, 256.6, 257.1, 257.6, 258.1, 258.5]);
-  X.lyr = {};
+  X.lyr = X.L ? {} : { y: HOR() - 230 };   // portrait: lyric sits in the sky, clear of his coat
 }
 // ---------- his words fall into the lake ----------
 function shotWords(t, lt, d) {
@@ -82,10 +82,10 @@ function shotWords(t, lt, d) {
   words.forEach((w, i) => { const ts = 259.9 + i * .5, age = t - ts; if (age < 0) return; const y = lip[1] + age * age * 260 + age * 40, x = lip[0] - 30 - i * 12 - age * 70, wet = seg(y, HOR() + 40, HOR() + 260);
     c.save(); c.globalAlpha = 1 - wet; c.fillStyle = ZX.ink; c.font = `${O(44, 48)}px ${ZX.fCN}`; c.textAlign = 'center'; c.fillText(w, x, y); c.restore();
     if (wet > 0) ripple(x, HOR() + 160 + i * 20, 30 + wet * 120, 1 - wet, 'wr' + i); });
-  X.lyr = {};
+  X.lyr = X.L ? {} : { y: HOR() - 230 };   // portrait: lyric sits in the sky, clear of his coat
 }
 // ---------- the high note ----------
-const STAFF = () => X.L ? { x0: 300, x1: 1170, y: 470, gap: 26, nx: 1050, ny: 270 } : { x0: 150, x1: 930, y: 640, gap: 28, nx: 820, ny: 420 };
+const STAFF = () => X.L ? { x0: 300, x1: 1170, y: 470, gap: 26, nx: 1050, ny: 270 } : { x0: 300, x1: 950, y: 560, gap: 26, nx: 860, ny: 360 };
 function shotHighNote(t, lt, d) {
   const c = X.ctx, S = STAFF(), V0 = X.VIS;
   lake(t, 1 - .5 * seg(lt, 0, 3)); rain(110, rgba('#4A5058', .6), 1, .14, 5);

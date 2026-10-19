@@ -74,11 +74,11 @@ function cPage(w0, h, t) {
       ink([[x, by], [x + sway * .4, (by + top) / 2], [x + sway, top]], 3.4, { col: mixCol(ZX.mist, ZX.ink, .25), key: 'cv' + r + i, taper: [0, .6] });
       if (snip > 0 && regrow < .3) { const fy = top - 10 + seg(t, T_PG.snip, T_PG.snip + 1.2) * h * .3, fx = x + hash(i * 3) * 30; ink([[fx, fy], [fx + 10, fy - 26]], 3, { col: ZX.mist, key: 'cf' + r + i, alpha: 1 - seg(t, T_PG.snip + .6, T_PG.snip + 1.2) }); }
     }
-    // scissors (her colour) close on the snip
-    const sa = seg(t, T_PG.snip - .8, T_PG.snip - .2) * (1 - seg(t, T_PG.snip + .9, T_PG.snip + 1.4));
-    if (sa > 0) { const op = .45 - .45 * snip + .2 * seg(t, T_PG.snip + .3, T_PG.snip + .6), sx = lerp(w * 1.1, w * .55, ease(seg(t, T_PG.snip - .8, T_PG.snip - .2))), sy = h * .58;
-      for (const sg of [-1, 1]) { const a = sg * op; const blade = rotP([[sx, sy], [sx - 260, sy - 14], [sx - 280, sy], [sx - 260, sy + 10]], sx, sy, a); shape(blade, ZX.cream, { key: 'bl' + sg, lw: 2.6 });
-        const ring = ellP(sx + 70 * cos(a) - 0, sy + 70 * sin(a) + sg * 26, 38, 26, 22); shape(ring, ZX.coral, { key: 'ri' + sg, lw: 2.6 }); } }
+    // the cut: one coral brush sweep across the chives (no literal scissors), then it lifts off as a thin wash
+    const sw = easeIO(seg(t, T_PG.snip - .3, T_PG.snip + .05)), sf = 1 - seg(t, T_PG.snip + .5, T_PG.snip + 1.3);
+    if (sw > 0 && sf > 0) { const yc = h * (.1 + 9 * .062) - h * .16 * .55, P = [[w * .14, yc + 18], [w * .4, yc - 4], [w * .66, yc + 6], [w * .9, yc - 12]];
+      c.save(); c.globalAlpha = sf; inkPart(P, sw, h * .009, { col: ZX.coral, key: 'sweep', taper: [.02, .85] });
+      if (sw > 0 && sw < 1) { const q = through(P, 6), e = q[min(q.length - 1, Math.round((q.length - 1) * sw))]; glow(e[0], e[1], 70, '#FF8A5A', .5); } c.restore(); }
     c.restore();
     if (turnK > 0) { const ex = w * (1 - turnK); c.save(); c.fillStyle = rgba(ZX.ink, .12); c.fillRect(ex, 0, 18, h); c.restore(); }
   }
@@ -154,7 +154,7 @@ function shotMud(t, lt, d) {
 function shotChess(t, lt, d) {
   const L = X.L, c = X.ctx;
   plate('amberPlain');
-  const cx = O(960, 540), cy = O(600, 1000), S = O(700, 860), cell = S / 8;
+  const cx = O(960, 540), cy = O(600, 1000), S = O(700, 660), cell = S / 8;
   const tilt = -.16 + .07 * sin(t * .9) + (t > 53.1 ? .05 * ease(seg(t, 53.1, 54)) : 0);
   const emerge = easeOut(seg(lt, 0, .8)), path = seg(t, 54.57, 55.4), off = seg(t, 55.6, 56.4);
   const sq = (i, j) => { const x = cx + (i - 4) * cell, y = cy + (j - 4) * cell; return rotP([[x, y], [x + cell, y], [x + cell, y + cell], [x, y + cell]], cx, cy, tilt); };

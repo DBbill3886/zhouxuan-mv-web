@@ -275,7 +275,8 @@ function shotFlood(t, lt, d) {
 }
 // ---------- star-trail eye ----------
 function starTrails(ex, ey, sp, a) { for (let i = 0; i < 40; i++) { const rr = O(300, 300) + hash(i * 3.3) * O(900, 700), a0 = hash(i * 7.1) * TAU, len = .2 + sp * .5; const arc = []; for (let k = 0; k <= 10; k++) { const q = a0 + k / 10 * len; arc.push([ex + cos(q) * rr, ey + sin(q) * rr]); } ink(arc, 1.6 + hash(i) * 1.6, { col: ZX.cream, key: 'trl' + i, alpha: .55 * a }); } }
-const EYE0 = () => X.L ? [960, 520] : [540, 900];
+const EYE_S = () => O(12000, 8000), EYEC = () => X.L ? [960, 520] : [540, 900];
+const EYE0 = () => { const G = FIG.her, c = EYEC(), mid = (G.eyeU[0][0] + G.eyeU[G.eyeU.length - 1][0]) / 2; return [c[0] + (G.iris[0] - mid) * EYE_S(), c[1]]; };   // iris position so the whole eye is centred
 function shotStarEye(t, lt, d) {
   plate('night'); fillAll(ZX.inkNight, .35); const c = X.ctx, [ex, ey] = EYE0(), G = FIG.her;
   const stop = seg(t, 189.8, 190.4), close = easeIn(seg(lt, d - .7, d));
@@ -285,19 +286,19 @@ function shotStarEye(t, lt, d) {
   starTrails(ex, ey, sp, 1 - stop * .7);
   if (false) for (let i = 0; i < 40; i++) { const rr = O(300, 300) + hash(i * 3.3) * O(900, 700), a0 = hash(i * 7.1) * TAU, len = .2 + sp * .5; const arc = []; for (let k = 0; k <= 10; k++) { const q = a0 + k / 10 * len; arc.push([ex + cos(q) * rr, ey + sin(q) * rr]); } ink(arc, 1.6 + hash(i) * 1.6, { col: ZX.cream, key: 'trl' + i, alpha: .55 * (1 - stop * .7) }); }
   // her eye, very close: lid curve + iris (the moon)
-  const s = O(12000, 11000), [ix, iy, ir] = G.iris, m = figMatrix(0, 0, s, 1, 0), I = mApply(m, [ix, iy]), ox = ex - I[0], oy = ey - I[1];
+  const s = EYE_S(), [ix, iy, ir] = G.iris, m = figMatrix(0, 0, s, 1, 0), I = mApply(m, [ix, iy]), ox = ex - I[0], oy = ey - I[1];
   const T = P => P.map(p => { const q = mApply(m, p); return [q[0] + ox, q[1] + oy]; });
   const eyeIn = easeOut(seg(lt, 0, .6));
   const lidU = G.eyeU.map((p, i) => { const q = i / (G.eyeU.length - 1), a = G.eyeU[0], b = G.eyeU[G.eyeU.length - 1], base = [lerp(a[0], b[0], q), lerp(a[1], b[1], q) + .012]; return [lerp(p[0], base[0], close), lerp(p[1], base[1], close)]; });
   c.save(); c.globalAlpha = eyeIn; wash(T([...through(lidU, 4), ...through(G.eyeL, 4).reverse()]), '#F4EEE0', { tex: .3, edge: 0 }); c.restore();
   if (close < .9) { c.save(); c.beginPath(); pathOf(c, T([...through(lidU, 4), ...through(G.eyeL, 4).reverse()]), true); c.clip(); moon(ex, ey, ir * s * 1.05, 1, 1); wash(ellP(ex, ey, ir * s * .55, ir * s * .55, 28), ZX.ink, { tex: .5 });
     for (let i = 0; i < 10; i++) { const rr = ir * s * (.62 + i * .04), arc = []; for (let k = 0; k <= 8; k++) { const q = i + k / 8 * (.5 + sp * .4); arc.push([ex + cos(q) * rr, ey + sin(q) * rr]); } ink(arc, 1.4, { col: ZX.cream, key: 'itr' + i, alpha: .7 }); } c.restore(); }
-  ink(T(lidU), O(30, 28), { key: 'elid', taper: [.2, .35] }); ink(T(G.eyeL), O(14, 13), { key: 'elow', alpha: (1 - close) * .9 }); ink(T(G.brow), O(16, 15), { key: 'ebrw', alpha: .8 });
+  ink(T(lidU), O(30, 22), { key: 'elid', taper: [.2, .35] }); ink(T(G.eyeL), O(14, 11), { key: 'elow', alpha: (1 - close) * .9 }); ink(T(G.brow), O(16, 12), { key: 'ebrw', alpha: .8 });
   if (lt < .5) moon(ex, ey, lerp(O(240, 260), ir * s * 1.05, easeOut(lt / .5)), 1, 1 - lt / .5);
   nightLyr();
 }
 // ---------- shrink: the shut lid becomes the horizon; a stain pushes him back ----------
-function lidLine(k) { const V0 = X.VIS, [ex, ey] = EYE0(), P = []; for (let i = 0; i <= 12; i++) { const u = i / 12; P.push([lerp(ex - O(700, 420) * (1 - k) , V0.x0 - 30, k) + u * lerp(O(1400, 840), V0.x1 - V0.x0 + 60, k), lerp(ey + sin(u * PI) * -40 * (1 - k), O(700, 1260), k)]); } return P; }
+function lidLine(k) { const V0 = X.VIS, [ex, ey] = EYEC(), P = []; for (let i = 0; i <= 12; i++) { const u = i / 12; P.push([lerp(ex - O(700, 420) * (1 - k) , V0.x0 - 30, k) + u * lerp(O(1400, 840), V0.x1 - V0.x0 + 60, k), lerp(ey + sin(u * PI) * -40 * (1 - k), O(700, 1260), k)]); } return P; }
 function shotShrink(t, lt, d) {
   plate('night'); const c = X.ctx, V0 = X.VIS, hk = easeIO(seg(lt, 0, .8)), H = lidLine(hk), hy = O(700, 1260);
   if (hk < 1) { fillAll(ZX.inkNight, .35 * (1 - hk)); const [ex, ey] = EYE0(); starTrails(ex, ey, (190.4 - 187.38) * .35 * .1 + 0, .3 * (1 - hk)); }

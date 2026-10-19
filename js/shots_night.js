@@ -186,7 +186,7 @@ function shotBalloon(t, lt, d) {
   X.dark = true; X.lyr = {};
 }
 // ---------- eyes: the last of the coral is her sweater; two faces, a gaze, a kind lie (→ Riso) ----------
-const R1POS = () => X.L ? { her: [712, 392, 400], him: [1222, 377, 420] } : { her: [300, 760, 380], him: [800, 1020, 400] };
+const R1POS = () => X.L ? { her: [712, 392, 400], him: [1222, 377, 420] } : { her: [330, 1200, 300], him: [770, 1225, 310] };   // portrait: faces in the lower half, type stacked above
 function shotEyes(t, lt, d) {
   const c = X.ctx, P = R1POS(), B = BAL();
   plate('night'); glow(O(960, 540), O(420, 880), O(700, 800), '#FFB45E', .22);
