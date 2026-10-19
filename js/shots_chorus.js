@@ -13,7 +13,7 @@ function roles(inv) {
   return inv ? { T: X.B, tc: '#000', F: X.A, fc: '#fff', P: X.A, pc: '#fff' } : { T: X.A, tc: '#fff', F: X.B, fc: '#fff', P: X.B, pc: '#fff' };
 }
 function figGrad(c, y0, y1, hi = 1, lo = .35) { const g = c.createLinearGradient(0, y0, 0, y1); const v = x => { const n = Math.round(255 * x); return `rgb(${n},${n},${n})`; }; g.addColorStop(0, v(hi)); g.addColorStop(.55, v(lerp(hi, lo, .3))); g.addColorStop(1, v(lo)); return g; }
-function rFig(R, who, x, y, s, dir, o = {}) { const c = R.F; figFlat(c, { who, x, y, s, dir, tilt: o.tilt || 0, fill: o.fill || figGrad(c, y - s * .5, y + s * 3.2, o.hi ?? 1, o.lo ?? .35), noBody: o.noBody, irisFill: o.iris }); }
+function rFig(R, who, x, y, s, dir, o = {}) { const c = R.F; figFlat(c, { who, x, y, s, dir, tilt: o.tilt || 0, fill: o.fill || figGrad(c, y - s * .5, y + s * 3.2, o.hi ?? 1, o.lo ?? .35), noBody: o.noBody, ...(o[who] || {}) }); }
 // big rows of display type, exact width
 function rRow(R, txt, x, base, w, h, a = 1) { const c = R.T; c.save(); c.globalAlpha = a; c.fillStyle = R.tc; fitWord(c, txt, x, base, w, h); c.restore(); }
 function rCN(R, lines, x, y, size, o = {}) {   // Chinese lines in bold Song, print-in by character
@@ -64,7 +64,7 @@ function chorusDensity(t, lt, d, kind, inv) {
     const k1 = easeOut(seg(lt, 0, .25)), k2 = easeOut(seg(lt, BEAT, BEAT + .25));
     if (L) { rRow(R, 'HEARTBREAKER', x0, M + CAP, rowW, CAP, k1); rRow(R, 'SUNDOWNER', x0, H - M, rowW, CAP, k2); }
     else pRows(R, x0, rowW, k1, k2, 0);
-    twoFigs(R, 0);
+    twoFigs(R, 0, { her: { arm: { from: 'reachLow', to: 'chest', k: seg(lt, 0, 1.2) }, tilt: .04 }, him: { tilt: -.04 } });
     rCN(R, midLines(t), x0, L ? midY - 38 : P_MID(), O(50, 46), { k: seg(lt, 0, .5) }); rMeta(R, t, tcLabel(t, tag));
   }
   else if (kind === 'R2') {   // 周旋 — they circle each other; the title rows run as a marquee
@@ -76,7 +76,7 @@ function chorusDensity(t, lt, d, kind, inv) {
     // the orbit line (dotted)
     const P = R1POS(), mx = (P.her[0] + P.him[0]) / 2, my = (P.her[1] + P.him[1]) / 2 + O(320, 330), rx = (P.him[0] - P.her[0]) / 2 + 40;
     const c = R.P; c.save(); c.fillStyle = R.pc; for (let i = 0; i < 64; i++) { const a = i / 64 * TAU + lt * .6; c.globalAlpha = .9; c.beginPath(); c.arc(mx + cos(a) * rx * 1.25, my + sin(a) * O(60, 120), 5, 0, TAU); c.fill(); } c.restore();
-    twoFigs(R, th);
+    twoFigs(R, th, { her: { arm: 'reachLow', lean: .12 }, him: { arm: 'pocket', armB: 'pocket', lean: -.02 } });
     const lines = ['多希望是你', '周旋着我妥协着'], k = seg(t, inv ? 204.9 : 88.14, (inv ? 204.9 : 88.14) + 1.2), k2 = inv ? seg(t, 208.86, 209.8) : 1;
     rCN(R, [lines[0]], x0, L ? midY - 38 : P_MID(), O(50, 46), { k }); if (k2 > 0) rCN(R, [lines[1]], x0, L ? midY + 38 : P_MID() + 70, O(50, 46), { k: inv ? k2 : k }); rMeta(R, t, tcLabel(t, tag));
   }
@@ -85,11 +85,11 @@ function chorusDensity(t, lt, d, kind, inv) {
     c.save(); c.fillStyle = R.tc; c.font = `${O(560, 600)}px ${ZX.fCNB}`; c.textBaseline = 'alphabetic'; c.textAlign = 'center';
     if (L) { c.fillText('刺', 480, 760); c.fillText('骨', 1440, 760); } else { c.font = `400px ${ZX.fCNB}`; c.fillText('刺', 540 - 210, V0.y0 + 560); c.fillText('骨', 540 + 210, V0.y0 + 560); } c.restore();
     const freeze = easeIO(seg(lt, d * .62, d * .62 + 1.2));
-    rFig(R, 'her', P.her[0], P.her[1], P.her[2], 1);
+    rFig(R, 'her', P.her[0], P.her[1], P.her[2], 1, { her: { arm: 'down', tilt: -.03 } });
     // him: CORAL → MIST from the hands up (cold)
-    const yF = P.him[1] + P.him[2] * 3.3 - freeze * P.him[2] * 3.9;
+    const yF = P.him[1] + P.him[2] * 3.3 - freeze * P.him[2] * 4.2;
     for (const [ctx, part] of [[R.F, 0], [inv ? X.B : X.A, 1]]) { ctx.save(); ctx.beginPath(); if (part === 0) ctx.rect(V0.x0, V0.y0 - 50, V0.x1 - V0.x0, yF - V0.y0 + 50); else ctx.rect(V0.x0, yF, V0.x1 - V0.x0, V0.y1 - yF + 50); ctx.clip();
-      figFlat(ctx, { who: 'him', x: P.him[0], y: P.him[1], s: P.him[2], dir: -1, fill: inv && part ? '#000' : figGrad(ctx, P.him[1] - P.him[2] * .5, P.him[1] + P.him[2] * 3.2), irisFill: inv && part ? '#fff' : undefined }); ctx.restore(); }
+      figFlat(ctx, { who: 'him', x: P.him[0], y: P.him[1], s: P.him[2], dir: -1, fill: inv && part ? '#000' : figGrad(ctx, P.him[1] - P.him[2] * .5, P.him[1] + P.him[2] * 3.2), tilt: .1 * freeze, arm: { from: 'pocket', to: 'hug', k: freeze }, armB: { from: 'pocket', to: 'hug', k: freeze }, still: true }); ctx.restore(); }
     // her words as cold breath: fine drifting wisps (type colour) leave her lips and settle on him as frost crystals — nothing stabs
     const lip = [P.her[0] + P.her[2] * .36, P.her[1] + P.her[2] * .3], tgt = [P.him[0] - P.him[2] * .3, P.him[1] + P.him[2] * .25];
     const q = R.T; q.save(); q.fillStyle = R.tc; q.strokeStyle = R.tc; q.lineCap = 'round';
@@ -108,7 +108,7 @@ function chorusDensity(t, lt, d, kind, inv) {
   else if (kind === 'R4') {   // 同情, struck through; a speech bubble from her lips holds it
     const c = R.T, P = R1POS(), y = O(560, 760);
     c.save(); c.fillStyle = R.tc; c.font = `${O(600, 350)}px ${ZX.fCNB}`; c.textBaseline = 'middle'; c.textAlign = 'center'; c.fillText('同情', CX(), y + O(20, 10)); c.restore();
-    twoFigs(R, 0, { lo: .3 });
+    twoFigs(R, 0, { lo: .3, her: { arm: 'mouth', tilt: -.02 }, him: { tilt: .12 } });
     const p = R.P; p.save(); p.fillStyle = R.pc; const bw = O(44, 40) * (1 + .15 * pulse(t, 8)); p.fillRect(V0.x0 + M, y - bw / 2, rowW, bw); p.restore();
     // bubble (outline + small type) — grows from her lips
     const k = backOut(seg(lt, .4, 1.1)), bx = P.her[0] + P.her[2] * .9, by = P.her[1] - P.her[2] * O(.7, .5), br = O(130, 110) * k * (1 - easeIn(seg(lt, d - .5, d)) * .55);
@@ -127,13 +127,13 @@ function chorusDensity(t, lt, d, kind, inv) {
       const r = F5[2] * (.9 + u * O(2.6, 3.0)), born = seg(lt, 0, .6); c.globalAlpha = (1 - u) * born; c.lineWidth = O(14, 10) * (1 - u * .7);
       c.beginPath(); c.ellipse(hx, hy, r, r * .92, 0, 0, TAU); c.stroke(); }
     c.restore();
-    if (L) rFig(R, 'her', F5[0], F5[1], F5[2], 1, { lo: .15 }); else rFig(R, 'her', F5[0], F5[1], F5[2], 1, { lo: .2 });
+    const seek = { arm: 'reach', tilt: -.06, lean: .1 }; if (L) rFig(R, 'her', F5[0], F5[1], F5[2], 1, { lo: .15, her: seek }); else rFig(R, 'her', F5[0], F5[1], F5[2], 1, { lo: .2, her: seek });
     rCN(R, midLines(t), x0, O(midY - 38, V0.y1 - 150), O(50, 46), { k: seg(lt, 0, 1) });
   }
   else if (kind === 'R6') {   // 索取着 罗列着 — no receipt: tally marks (正-style groups of five) keep counting, stroke by stroke
     const c = R.T; c.save(); c.fillStyle = R.tc; c.font = `${O(400, 360)}px ${ZX.fCNB}`; c.textBaseline = 'alphabetic';
     if (L) { c.fillText('索取', V0.x0 + M - 10, 420); c.textAlign = 'right'; c.fillText('罗列', V0.x1 - M + 10, H - M); } else { c.textAlign = 'center'; c.fillText('索取', 540, V0.y0 + 520); c.fillText('罗列', 540, V0.y1 - 220); } c.restore();
-    rFig(R, 'him', O(1460, 790), O(330, 760), O(330, 190), -1, { lo: .25 });
+    rFig(R, 'him', O(1460, 790), O(330, 760), O(330, 190), -1, { lo: .25, him: { arm: 'hug', armB: 'pocket', tilt: .06 } });
     const p = R.P, gw = O(118, 96), sh = O(92, 78), sx = O(22, 18), cols = O(7, 5), rows = O(2, 4), gx0 = x0 + O(10, 0), gy0 = O(500, V0.y0 + 640), rg = O(130, 112);
     const n = floor(seg(lt, .15, d - .4) * cols * rows * 5 + 1e-6);
     p.save(); p.fillStyle = R.pc; p.strokeStyle = R.pc; p.lineCap = 'round';
@@ -154,14 +154,14 @@ function chorusDensity(t, lt, d, kind, inv) {
       let x = x0d, y = y0d; if (age > 0) { const tf = sqrt(max(1, fy - y0d) / 2600); if (age < tf) y = y0d + 2600 * age * age; else { y = fy - 5; x = x0d + sin(i) * 4 * exp(-(age - tf) * 6); } }
       p.beginPath(); p.arc(x, y, O(7, 7), 0, TAU); p.fill(); }
     p.restore();
-    if (L) rFig(R, 'her', 260, 330, 260, 1, { lo: .3 });
+    if (L) rFig(R, 'her', 260, 330, 260, 1, { lo: .3, her: { arm: { from: 'reachLow', to: 'hang', k: flat }, tilt: .14 * flat } });
     rCN(R, midLines(t), x0, O(V0.y1 - 120, V0.y1 - 150), O(46, 52), { k: seg(lt, 0, 1) });
   }
   else if (kind === 'R8') {   // 是谁的错 — back to back on the floor of fallen dots; the question set as a vertical line of type between their backs
     const p = R.P, B8 = R8POS(), fy = B8.floor, k = easeIO(seg(lt, 0, 1));
     p.save(); p.fillStyle = R.pc; p.fillRect(V0.x0 - 20, fy - 5, V0.x1 - V0.x0 + 40, 10); p.restore();
     const up = (1 - k) * 200;
-    rFig(R, 'her', B8.her[0], B8.her[1] + up, B8.her[2], -1); rFig(R, 'him', B8.him[0], B8.him[1] + up, B8.him[2], 1);
+    rFig(R, 'her', B8.her[0], B8.her[1] + up, B8.her[2], -1, { her: { arm: 'hug', tilt: .14 } }); rFig(R, 'him', B8.him[0], B8.him[1] + up, B8.him[2], 1, { him: { tilt: .1 } });
     rCN(R, [cnPart(lyrAt(t)).split(' ')[0]], x0, O(V0.y1 - 110, V0.y1 - 150), O(42, 46), { k: seg(lt, 0, 1) });
     const q = cnPart(lyrAt(t)).split(' ')[1] || '是谁的错', vk = seg(lt, d * .45, d * .45 + 1.0), vs = O(150, 124), c = R.T;
     if (vk > 0) { c.save(); c.fillStyle = R.tc; c.font = `${vs}px ${ZX.fCNB}`; c.textAlign = 'center'; c.textBaseline = 'alphabetic'; const ch = [...q], shown = Math.ceil(vk * ch.length);

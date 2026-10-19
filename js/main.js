@@ -89,7 +89,7 @@ function render(t) {
   sc.fillStyle = ZX.paper; sc.fillRect(0, 0, V.bw, V.bh);
   ac.fillStyle = '#000'; ac.fillRect(0, 0, V.bw, V.bh); bc.fillStyle = '#000'; bc.fillRect(0, 0, V.bw, V.bh);
   for (const c of [sc, ac, bc]) c.setTransform(...base);
-  X.mode = 'paint'; X.mix = 0; X.dark = false; X.lyr = {}; X.colA = ZX.mist; X.colB = ZX.coral; X.paper = ZX.paper; X.noInfo = false; X.mis = [6, -4]; X.infoInk = 'A';
+  X.mode = 'paint'; X.mix = 0; X.dark = false; X.lyr = {}; X.colA = ZX.mist; X.colB = ZX.coral; X.paper = ZX.paper; X.noInfo = false; X.mis = [6, -4]; X.infoInk = 'A'; X.light = null; X.rimA = null; X.rimCol = null; X.glowCol = null; X.plateName = 'night';
   runShot(t);
   for (const c of [sc, ac, bc]) { c.setTransform(...base); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; }
   if (X.mix < .999) { drawLyric(t); infoBar(t, sc, X.dark ? ZX.cream : ZX.ink, X.dark ? .6 : .72); }
@@ -170,10 +170,9 @@ window.__setQuality = q => { quality = q; layout(); render(lastT); };   // test 
 window.__bench = (t0, t1, n) => { const o = []; for (let i = 0; i < n; i++) { const p = performance.now(); render(t0 + (t1 - t0) * i / n); o.push(performance.now() - p); } return o; };
 // ---------------- boot: fonts + assets ----------------
 layout();
-const PL = ['paper', 'amber', 'amberPlain', 'mud', 'night', 'dawn', 'sea', 'rain', 'rainDark'], SP = ['herSkin', 'herHair', 'herBody', 'himSkin', 'himHair', 'himBody', 'himBodyGray', 'herBodyGray'];
+const PL = ['paper', 'amber', 'amberPlain', 'mud', 'night', 'dawn', 'sea', 'rain', 'rainDark'];
 const jobs = [loadImg('tile', 'assets/tex/tile.webp').then(i => { TILE = i; })];
 for (const p of PL) for (const o of ['L', 'P']) for (const v of [0, 1]) jobs.push(loadImg(`plate_${p}_${o}_${v}`, `assets/plates/${p}_${o}_${v}.webp`));
-for (const s of SP) for (const v of [0, 1]) jobs.push(loadImg(`spr_${s}_${v}`, `assets/sprites/${s}_${v}.webp`));
 const fonts = Promise.all([document.fonts.load(`40px ${ZX.fCN}`, '周旋'), document.fonts.load(`40px ${ZX.fCNB}`, '周旋'), document.fonts.load(`40px ${ZX.fD}`, 'HEART'), document.fonts.load(`600 20px ${ZX.fUI}`, 'ZHOU')]).catch(() => {});
 let nDone = 0; jobs.forEach(j => j.then(() => { nDone++; const el = $('load'); if (el) el.textContent = `载入中 ${Math.round(nDone / jobs.length * 100)}%`; }));
 Promise.all([Promise.race([fonts, new Promise(r => setTimeout(r, 4000))]), Promise.all(jobs)]).then(() => {

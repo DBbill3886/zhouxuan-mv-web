@@ -110,6 +110,7 @@ const boilW = () => .45 * (.5 - .5 * cos(X.t * TAU / 1.7));
 function drawBoiled(c, name, f) { const a = IMG[name + '_0'], b = IMG[name + '_1']; if (!a) return false; f(a, 1); const w = boilW(); if (b && w > .01) f(b, w); return true; }
 // plates: 2 boil variants, cross-switched at 5 fps, per orientation
 function plate(name, o = {}) {
+  X.plateName = name;
   const key = `plate_${name}_${X.L ? 'L' : 'P'}`, im = IMG[key + '_0'], im1 = o.still ? null : IMG[key + '_1'];
   const c = X.ctx; if (!im) { fillAll(ZX.paper); return; }
   c.save(); c.globalAlpha *= o.alpha ?? 1;

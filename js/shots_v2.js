@@ -21,17 +21,21 @@ function shotInterlude(t, lt, d) {
   // the floor line (from R8) fades
   const fl = 1 - seg(lt, 1.2, 3); if (fl > 0) ink([[V0.x0 - 20, B8.floor], [CX(), B8.floor + 2], [V0.x1 + 20, B8.floor]], 5, { col: ZX.cream, key: 'ifl', alpha: fl, taper: [0, 0] });
   // binary orbit: from back-to-back on the floor to circling each other, then flung apart
-  const mx = CX(), my = O(520, 900), th = PI + orbit * TAU * 1.5 + apart * 1.2, rr = lerp(O(340, 270), O(560, 330), ease(seg(lt, 3, 8))) * (1 + apart * 1.8), ry = O(.32, 1.1);
+  const mx = CX(), my = O(470, 900), th = PI + orbit * TAU * 1.5 + apart * 1.2, rr = lerp(O(340, 270), O(560, 330), ease(seg(lt, 3, 8))) * (1 + apart * 1.8), ry = O(.32, 1.1);
   const pos = w => { const sg = w === 'her' ? 1 : -1; return [mx + cos(th) * rr * sg, my + sin(th) * rr * ry * sg]; };
   const P = { her: pos('her'), him: pos('him') };
   // trails (dotted, each in their colour)
   if (orbit > 0) for (const w of ['her', 'him']) { for (let i = 1; i < 26; i++) { const a = th - i * .09, sg = w === 'her' ? 1 : -1, x = mx + cos(a) * rr * sg, y = my + sin(a) * rr * ry * sg;
     c.fillStyle = rgba(w === 'her' ? ZX.coral : ZX.mist, (1 - i / 26) * .8 * seg(orbit, 0, .05)); c.beginPath(); c.arc(x, y + O(120, 120), 4, 0, TAU); c.fill(); } }
   for (const w of ['her', 'him']) {
-    const s0 = B8[w][2], s = lerp(s0, O(92, 90), lift), fx = lerp(B8[w][0], P[w][0], lift), fy = lerp(B8[w][1], P[w][1] - O(250, 280), lift);   // full figures (8 heads) once they float free
+    const s0 = B8[w][2], s = lerp(s0, O(70, 80), lift), fx = lerp(B8[w][0], P[w][0], lift), fy = lerp(B8[w][1], P[w][1] - 3.2 * O(70, 80), lift);   // full figures, centred on their orbit point, once they float free
     const other = w === 'her' ? P.him : P.her, face = lift < .5 ? (w === 'her' ? -1 : 1) : Math.sign(other[0] - P[w][0]) || 1;
     const dir = lift < .5 ? face : lerp(w === 'her' ? -1 : 1, face, seg(lift, .5, 1)) || face;
-    figure({ who: w, x: fx, y: fy, s, dir: sgnDir(dir), tilt: sin(t * .7 + (w === 'her' ? 0 : 2)) * .08, blink: blinkAt(t, w === 'her' ? [124.2, 131.0] : [127.5, 133.6]), alpha: 1 - seg(apart, .7, 1), full: lift > .01, legA: seg(lift, 0, .4) });
+    // drifting in orbit under the stars: lit by starlight from above; when they are flung apart she reaches after him, he lets go
+    X.light = { dir: [0, -1] }; X.rimA = .55 + .35 * lift; X.rimCol = '#E6ECF8';
+    const reach = easeIO(seg(lt, 13.4, 15.2));
+    figure({ who: w, x: fx, y: fy, s, dir: sgnDir(dir), tilt: sin(t * .7 + (w === 'her' ? 0 : 2)) * .08, alpha: 1 - seg(apart, .7, 1), full: lift > .01, legs: 'stand', wind: .6,
+      lean: w === 'her' ? .07 + .1 * reach : .03 - .06 * reach, arm: w === 'her' ? { from: 'down', to: 'reachHi', k: reach } : { from: 'pocket', to: 'hang', k: reach }, armB: w === 'her' ? 'hang' : { from: 'pocket', to: 'hang', k: reach } });
   }
   // the spark: a coral point rises from the bottom and bursts at 2:18
   const sk = seg(t, 135.8, 138); if (sk > 0) { const x = CX() + sin(sk * 9) * 8, y = lerp(V0.y1 + 20, FW0()[1], easeOut(sk));
@@ -51,9 +55,11 @@ function shotFireworks(t, lt, d) {
   T.forEach((ts, i) => { const [x, y] = fwPos(i), age = t - ts; if (i < T.length - 1 || age < .9) firework(x, y, age, i % 2 ? ZX.amberLt : ZX.coral, O(1.2, 1.25) * (i === 0 ? 1.25 : 1), 'fw' + i); if (age > 0 && age < .5) flash = max(flash, 1 - age / .5); });
   if (flash > 0) fillAll('#5A4A60', .12 * flash);
   // two small figures from the back-left looking up, lit by each burst
-  const s = O(190, 210), tint = flash > .35 ? '#FFC98A' : null;
-  figure({ who: 'her', x: O(780, 380), y: O(780, 1430), s, dir: 1, tilt: -.38, look: .6, blink: blinkAt(t, [141.2]), skinTint: tint });
-  figure({ who: 'him', x: O(1110, 700), y: O(760, 1400), s: s * 1.05, dir: -1, tilt: -.34, look: .6, blink: blinkAt(t, [140.1]), skinTint: tint });
+  // 短暂又绚烂的烟花: both look up; each burst flares their rims; at the last burst her hand rises a little, as if to keep it
+  const s = O(190, 210); let li = 0; T.forEach((ts, i) => { if (t >= ts) li = i; });
+  X.light = fwPos(li); X.rimA = .55 + 1.1 * flash; X.rimCol = li % 2 ? '#FFE2B0' : '#FFC2A8';
+  figure({ who: 'her', x: O(780, 380), y: O(780, 1430), s, dir: 1, tilt: -.38, arm: { from: 'down', to: 'chest', k: seg(t, 141.6, 142.6) }, lightR: 2400 });
+  figure({ who: 'him', x: O(1110, 700), y: O(760, 1400), s: s * 1.05, dir: -1, tilt: -.34, lightR: 2400 });
   // the last burst's trails fall to the ground and become two lines (→ paths)
   const fall = seg(t, 142.9, 143.88); if (fall > 0) { const [x, y] = fwPos(5); for (const sg of [-1, 1]) inkPart([[x + sg * 40, y + 60], [x + sg * 80, lerp(y + 200, X.VIS.y1 - 200, fall)], [x + sg * 30, X.VIS.y1 + 20]], easeIn(fall), 4, { col: sg < 0 ? ZX.coral : ZX.mist, key: 'ft' + sg }); }
   nightLyr();
@@ -110,7 +116,7 @@ function shotHand(t, lt, d) {
   // frost creeping in from the edges of the palm
   for (let i = 0; i < 9; i++) { const a = -PI * .9 + i * PI * .22, r0 = 260 * s * .55, r1 = r0 + 70 * cool; if (cool > .05) ink([[hx + cos(a) * r0, hy + sin(a) * r0 * .9], [hx + cos(a + .05) * (r0 + r1) / 2, hy + sin(a + .05) * (r0 + r1) / 2 * .9], [hx + cos(a) * r1, hy + sin(a) * r1 * .9]], 2, { col: '#B8C4D4', key: 'fr' + i, alpha: cool }); }
   // her, far away and leaving (a small coral figure at the top)
-  const w = seg(lt, 0, d); figure({ who: 'her', x: O(1500, 860) + w * 60, y: O(260, 420), s: O(90, 90), dir: 1, alpha: .9 * (1 - w * .8), blink: 0, noBody: false });
+  const w = seg(lt, 0, d); figure({ who: 'her', x: O(1500, 860) + w * 60, y: O(260, 420), s: O(90, 90), dir: 1, alpha: .9 * (1 - w * .8) });
   nightLyr();
 }
 // ---------- fishbowl: two fish circling, a knock, a crack ----------
@@ -142,30 +148,35 @@ function shotFish(t, lt, d) {
 function shotDream(t, lt, d) {
   plate('night'); const c = X.ctx, [bx, by, br] = BOWL(), up = easeIn(seg(lt, d - .7, d)) * O(900, 1300);
   const hx = O(560, 380), hy = O(760, 1450), s = O(300, 320);
-  figure({ who: 'him', x: hx, y: hy, s, dir: 1, tilt: .32 + sin(t * .8) * .03, blink: 1, brow: .5 });   // eyes shut on purpose: he is asleep
+  // 不醒的梦: asleep, head bowed, holding himself; the dream bubble's amber light rims him from above
+  X.light = [bx, by - up]; X.rimA = .9; X.rimCol = '#F2C48A';
+  figure({ who: 'him', x: hx, y: hy, s, dir: 1, tilt: .32 + sin(t * .8) * .03, bodyTilt: .05, arm: 'hug', armB: 'hug', lightR: 1600 });
   // thought dots from his head to the bubble
   for (let i = 0; i < 4; i++) { const u = (i + 1) / 5, x = lerp(hx + s * .4, bx - br * .7, u), y = lerp(hy - s * .6, by + br * .7, u) - up * u; c.fillStyle = rgba(ZX.cream, .9); c.beginPath(); c.arc(x, y, 8 + i * 5, 0, TAU); c.fill(); }
   // inside the bubble: her, in amber (the past), still there
   const m = easeIO(seg(lt, 0, .8));
   c.save(); c.beginPath(); c.ellipse(bx, by - up, br, br * .96, 0, 0, TAU); c.clip();
   wash(ellP(bx, by - up, br, br * .96, 48), mixCol('#3D5778', ZX.amber, m), { tex: .8 });
-  if (m > 0) figure({ who: 'her', x: bx - br * .12, y: by - br * .18 - up, s: br * .62, dir: 1, tilt: .06, blink: blinkAt(t, [160.2]), alpha: m });
+  if (m > 0) { X.light = [bx + br, by - br - up]; X.rimCol = '#FFE4B4'; figure({ who: 'her', x: bx - br * .12, y: by - br * .18 - up, s: br * .62, dir: 1, tilt: .06, alpha: m, arm: 'chest' }); }
   if (m < 1) { const sp = t * 1.6, rr = br * .45; c.globalAlpha = 1 - m; fish(bx + cos(sp) * rr, by + sin(sp) * rr * .5 - up, sp + PI / 2, 1, ZX.coral, 'fa'); fish(bx + cos(sp + PI) * rr, by + sin(sp + PI) * rr * .5 - up, sp + PI * 1.5, 1, ZX.mist, 'fb'); c.globalAlpha = 1; }
   c.restore();
   ink(ellP(bx, by - up, br, br * .96, 48), 3.4, { col: ZX.cream, closed: true, key: 'bowl' }); c.save(); c.translate(0, -up); bowlCrack(1, bx, by, br); c.restore();
   nightLyr(); if (!X.L) X.lyr.y = X.VIS.y0 + 430;
 }
 // ---------- strings: fate's puppet; a heart line that wants to move ----------
-const STR = () => X.L ? { x: 960, y: 330, s: 300, bar: 70 } : { x: 540, y: 760, s: 320, bar: 230 };
+const STR = () => X.L ? { x: 960, y: 330, s: 300, bar: 70 } : { x: 540, y: 720, s: 180, bar: 230 };
 function shotStrings(t, lt, d) {
   plate('night'); const c = X.ctx, S = STR(), V0 = X.VIS, cut = seg(t, 166.0, 166.25), drop = easeIn(seg(t, 166.05, 166.56)) * O(1100, 1500);
   const pull = sin(t * 2.4) * .14, down = easeOut(seg(lt, 0, .8));
-  const f = figure({ who: 'him', x: S.x + sin(t * 1.2) * 30, y: S.y + 20 + drop, s: S.s, dir: -1, tilt: pull, bodyTilt: pull * .4, brow: .4, blink: blinkAt(t, [163.4, 165.2]) * .8 + .35 });
+  // 命运捉弄: a marionette — the strings lift his hands and head; when they are cut he drops
+  X.light = { dir: [0, -1] }; X.rimA = .9; X.rimCol = '#F4EEE0';
+  const lim = 1 - cut, arms = (sgn) => [lerp(.1, O(1.15, .8) + sgn * pull * 1.2, lim), lerp(.15, O(1.75, 1.2) + sgn * pull, lim), lerp(.15, O(1.9, 1.3), lim), .4, 1];   // portrait: elbows lower so the hands stay in frame
+  const f = figure({ who: 'him', x: S.x + sin(t * 1.2) * 30, y: S.y + 20 + drop, s: S.s, dir: -1, tilt: pull + cut * .3, bodyTilt: pull * .4, arm: arms(1), armB: arms(-1).map((v, i) => i < 3 ? -v : v) });
   // the cross-bar and its strings (they arrive from the dream bubble's dots)
   const bx = S.x + sin(t * 1.2) * 30, by = V0.y0 + S.bar + (1 - down) * -300;
   ink([[bx - 220, by + pull * 200], [bx, by], [bx + 220, by - pull * 200]], 6, { col: ZX.cream, key: 'bar' });
-  const anchors = [[.5, -.05], [-.3, 1.3], [1.0, 1.3]];
-  anchors.forEach((a, i) => { const p = f.pt(a), top = [bx + (i - 1) * 200, by + (i - 1) * -pull * 200]; const yEnd = cut > 0 ? lerp(p[1], top[1] + 80, cut) : p[1];
+  const ends = [f.hands.B || f.pt([-.3, 1.3]), f.pt([.5, -.05]), f.hands.F || f.pt([1.0, 1.3])];
+  ends.forEach((p, i) => { const top = [bx + (i - 1) * 200, by + (i - 1) * -pull * 200]; const yEnd = cut > 0 ? lerp(p[1], top[1] + 80, cut) : p[1];
     ink([top, [lerp(top[0], p[0], .5), lerp(top[1], yEnd, .5)], [p[0], yEnd]], 1.6, { col: ZX.cream, key: 'st' + i, alpha: .85 }); });
   // heart line across the chest: it moves on every beat, then is told not to (又何必让心波动)
   const amp = (1 - easeIO(seg(t, 164.3, 165.6))) * O(90, 80) * (.4 + .6 * pulse(t, 4)), y = S.y + S.s * 1.8 + drop, P = [];
@@ -194,7 +205,7 @@ function shotChair(t, lt, d) {
   const fall = easeIn(seg(lt, 0, .7)); for (let i = 0; i < 3; i++) { const x = chX - 80 + i * 70, y0 = lerp(V0.y0 - 200, chY - 60, fall); ink([[x, y0 - 300 + fall * 260], [x + 10, y0 - 150 + fall * 120], [x + 30 * fall, y0]], 1.6, { col: ZX.cream, key: 'cs' + i, alpha: .8 }); }
   // someone's shadow enters the light (下一个又会是谁)
   const sh = easeIO(seg(t, 168.2, 170.19)); if (sh > 0) { c.save(); c.globalAlpha = .7 * sh; c.translate(R.dx + R.dw * .5, R.floorY); c.transform(1, 0, O(-1.1, -.6), O(.55, .5) + sh * .25, 0, 0);
-    figFlat(c, { who: 'her', x: 60 - (1 - sh) * 200, y: -O(560, 600), s: O(170, 180), dir: -1, fill: '#0E1320', eye: false }); c.restore(); }
+    figFlat(c, { who: 'her', x: 60 - (1 - sh) * 200, y: -O(560, 600), s: O(170, 180), dir: -1, fill: '#0E1320', walk: sh * 6, arm: 'down' }); c.restore(); }
   nightLyr();
 }
 // ---------- shadows on the wall: where they overlapped, a seal stays ----------
@@ -214,7 +225,10 @@ function shotShadows(t, lt, d) {
   if (ex < 1) { c.save(); c.globalAlpha = 1 - ex; const chX = O(760, 360), chY = DOOR()[1] + DOOR()[3] + O(10, 60); lightCone(chX, V0.y0 - 20, 90, O(620, 520), chY - V0.y0 + 300, '#FFC27A', .55); chair(chX, chY - 20 * O(1.2, 1.1), O(1.2, 1.1), '#3A4258', ZX.cream); c.restore(); }
   const meet = kf(lt, [[0, 1], [1.6, 0], [2.6, 0], [d, 1.1]], easeIO), S = O(300, 300);
   const herX = sx - O(60, 40) - meet * O(520, 300), himX = sx + O(60, 40) + meet * O(520, 300), fy = sy - O(80, 60);
-  c.save(); c.globalAlpha = .62 * easeIO(seg(lt, .2, 1.2)); figFlat(c, { who: 'her', x: herX, y: fy, s: S, dir: 1, fill: '#151A28', eye: false }); figFlat(c, { who: 'him', x: himX, y: fy - 10, s: S * 1.04, dir: -1, fill: '#151A28', eye: false }); c.restore();
+  // 影子里留下了烙印: their shadows lean in until her hand and his meet; the seal is pressed where they overlapped
+  const touch = 1 - clamp(meet * 1.6); c.save(); c.globalAlpha = .62 * easeIO(seg(lt, .2, 1.2));
+  figFlat(c, { who: 'her', x: herX, y: fy, s: S, dir: 1, fill: '#151A28', arm: { from: 'down', to: 'reach', k: touch }, lean: .07 + .08 * touch });
+  figFlat(c, { who: 'him', x: himX, y: fy - 10, s: S * 1.04, dir: -1, fill: '#151A28', arm: { from: 'pocket', to: 'reachLow', k: touch }, lean: .03 + .05 * touch }); c.restore();
   // the seal is pressed where they overlapped, and stays
   const press = backOut(seg(t, 172.0, 172.5)); if (press > 0) seal(sx, sy + S * .9, ss * press);
   nightLyr();
@@ -223,13 +237,13 @@ function shotShadows(t, lt, d) {
 function bubble(x, y, r, a, k, kind) {
   const c = X.ctx; c.save(); c.globalAlpha = a;
   c.beginPath(); c.arc(x, y, r, 0, TAU); c.clip(); wash(ellP(x, y, r, r, 30), '#3D5778', { tex: .5, alpha: .4 });
-  figFlat(c, { who: 'her', x: x - r * .38, y: y - r * .25, s: r * .4, dir: 1, fill: ZX.coral, eye: false }); figFlat(c, { who: 'him', x: x + r * .38, y: y - r * .27, s: r * .42, dir: -1, fill: ZX.mist, eye: false }); c.restore();
+  figFlat(c, { who: 'her', x: x - r * .38, y: y - r * .25, s: r * .4, dir: 1, fill: ZX.coral, arm: 'reach' }); figFlat(c, { who: 'him', x: x + r * .38, y: y - r * .27, s: r * .42, dir: -1, fill: ZX.mist }); c.restore();
   ink(ellP(x, y, r, r, 30), 2.4, { col: ZX.cream, closed: true, key: 'bb' + k, alpha: a }); glow(x - r * .4, y - r * .4, r * .3, '#FFFFFF', .3 * a);
 }
 function shotBubbles(t, lt, d) {
   plate('night'); const c = X.ctx, V0 = X.VIS, [sx, sy, ss] = SEAL();
   const lift = easeIO(seg(lt, 0, 1)); if (lift < 1) { c.save(); c.globalAlpha = .55 * (1 - lift); wash(rectP(V0.x0 - 40, V0.y0 - 40, V0.x1 - V0.x0 + 80, V0.y1 - V0.y0 + 80), '#E8C08A', { tex: .7, edge: .2 }); c.restore(); glow(sx, sy, O(900, 800), '#FFC27A', .3 * (1 - lift)); }
-  if (lift < 1) { const S = O(300, 300), m = 1.1, fy = sy - O(80, 60); c.save(); c.globalAlpha = .62 * (1 - lift); figFlat(c, { who: 'her', x: sx - O(60, 40) - m * O(520, 300), y: fy, s: S, dir: 1, fill: '#151A28', eye: false }); figFlat(c, { who: 'him', x: sx + O(60, 40) + m * O(520, 300), y: fy - 10, s: S * 1.04, dir: -1, fill: '#151A28', eye: false }); c.restore(); }
+  if (lift < 1) { const S = O(300, 300), m = 1.1, fy = sy - O(80, 60); c.save(); c.globalAlpha = .62 * (1 - lift); figFlat(c, { who: 'her', x: sx - O(60, 40) - m * O(520, 300), y: fy, s: S, dir: 1, fill: '#151A28' }); figFlat(c, { who: 'him', x: sx + O(60, 40) + m * O(520, 300), y: fy - 10, s: S * 1.04, dir: -1, fill: '#151A28' }); c.restore(); }
   if (lift < 1) seal(sx, sy + 270 - lift * 200, ss * (1 - lift * .6), 1 - lift);
   for (let i = 0; i < 11; i++) {
     const born = .3 + i * .28, age = lt - born, popAt = 1.2 + hash(i * 9) * 1.6; if (age < 0) continue;
@@ -310,7 +324,9 @@ function shotShrink(t, lt, d) {
   for (let i = 0; i < 36; i++) { const a = i / 36 * TAU, r = (V0.y1 - V0.y0) * (1 + .1 * sin(a * 5 + t)); P.push([sx + r + cos(a) * r * (1 + .15 * sin(a * 3)), hy + sin(a) * r * .9]); }
   wash(P, ZX.inkNight, { tex: .9, edge: .5, edgeW: 18 });
   const sc = lerp(O(300, 320), O(110, 120), easeIO(seg(lt, .4, d))), fx = lerp(O(1060, 600), O(560, 330), easeIO(seg(lt, .4, d)));
-  figure({ who: 'him', x: fx, y: hy - sc * 3.25 + sc * 2.0, s: sc, dir: 1, tilt: .06, brow: .8, blink: blinkAt(t, [192.6]) * .5 + .3, alpha: hk });
+  // 自卑蔓延…击退: the stain pushes him back; he folds in on himself, arms around his body, head down
+  const fold = easeIO(seg(lt, .4, d)); X.light = { dir: [.6, -.8] }; X.rimA = .8 * (1 - .5 * fold);
+  figure({ who: 'him', x: fx, y: hy - sc * 3.25 + sc * 2.0, s: sc, dir: 1, tilt: .06 + .22 * fold, bodyTilt: .08 * fold, alpha: hk, arm: { from: 'pocket', to: 'hug', k: fold }, armB: { from: 'pocket', to: 'hug', k: fold } });
   nightLyr();
 }
 // ---------- turn away ----------
@@ -321,9 +337,11 @@ function shotTurn(t, lt, d) {
   for (let i = 0; i < 36; i++) { const a = i / 36 * TAU, r = (V0.y1 - V0.y0) * (1 + .1 * sin(a * 5 + t)); P.push([sx + r + cos(a) * r * (1 + .15 * sin(a * 3)), hy + sin(a) * r * .9]); }
   wash(P, ZX.inkNight, { tex: .9, edge: .5, edgeW: 18 });
   const tk = easeIO(seg(lt, .3, 1.3)), dir = cos(tk * PI), sc = lerp(O(110, 120), O(220, 240), easeIO(seg(lt, .2, d))), walk = easeIn(seg(lt, 1.3, d)) * O(-600, -420);
-  figure({ who: 'him', x: O(560, 330) + walk, y: hy - sc * 1.25, s: sc, dir: sgnDir(dir), tilt: -.03, brow: .3, blink: .3 });
+  // 不再问原因: he turns his back and walks away along the horizon, hands in his pockets
+  X.light = { dir: [.7, -.7] }; X.rimA = .8;
+  const fs = sc * O(.33, .34); figure({ who: 'him', x: O(560, 330) + walk, y: anchorOn('him', hy + 4, fs), s: fs, dir: sgnDir(dir), tilt: .05, full: true, walk: lt * 5.6, walkA: easeIO(seg(lt, 1.0, 1.8)), arm: 'pocket', armB: 'pocket' });
   // her face fades in from the right (→ gaze)
-  const hf = easeIO(seg(lt, d - 1, d)); if (hf > 0) { const P1 = R1POS(); c.save(); c.globalAlpha = hf; figure({ who: 'her', x: P1.her[0], y: P1.her[1], s: P1.her[2], dir: 1, alpha: hf }); c.restore(); }
+  const hf = easeIO(seg(lt, d - 1, d)); if (hf > 0) { const P1 = R1POS(); X.light = [O(960, 540), O(330, 600)]; c.save(); c.globalAlpha = hf; figure({ who: 'her', x: P1.her[0], y: P1.her[1], s: P1.her[2], dir: 1, alpha: hf, lightR: O(1600, 1800) }); c.restore(); }
   nightLyr();
 }
 // ---------- her gaze; the kind lie runs out; into the inverted print ----------
@@ -331,8 +349,10 @@ function shotGaze(t, lt, d) {
   plate('night'); glow(O(960, 540), O(420, 880), O(700, 800), '#FFB45E', .16); eyesLamp(easeOut(seg(lt, .2, 1.4)) * (1 - .6 * easeIO(seg(t, 200.6, 202.6))));
   const P = R1POS(), close = easeIO(seg(t, 200.6, 201.6)) * (1 - easeIO(seg(t, 202.4, 203.0)));
   const hin = easeIO(seg(lt, .4, 1.6));
-  figure({ who: 'her', x: P.her[0], y: P.her[1], s: P.her[2], dir: 1, tilt: .02, blink: max(close, blinkAt(t, [199.4])), look: .3 });
-  figure({ who: 'him', x: P.him[0], y: P.him[1] + (1 - hin) * 60, s: P.him[2], dir: -1, tilt: -.02, blink: blinkAt(t, [198.0]), look: .4, alpha: hin, brow: .4 });
+  // 凝视你眼睛 · 善意的谎言也终将尽: face to face again; as the thread unwinds she lowers her head and her hand comes back to her chest
+  X.light = [O(960, 540), O(330, 600)]; X.rimA = 1.1 * (1 - .4 * close); X.rimCol = null;
+  figure({ who: 'her', x: P.her[0], y: P.her[1], s: P.her[2], dir: 1, tilt: .02 + .16 * close, arm: { from: 'reachLow', to: 'chest', k: seg(t, 198.6, 200.4) }, lightR: O(1600, 1800) });
+  figure({ who: 'him', x: P.him[0], y: P.him[1] + (1 - hin) * 60, s: P.him[2], dir: -1, tilt: -.02, alpha: hin, lightR: O(1600, 1800) });
   // the thread from 1:21, now unwinding back into her lips (终将尽)
   const k = 1 - easeIO(seg(t, 198.45, 201.6)); if (k > 0 && lt > .3) { const lip = [P.her[0] + P.her[2] * .34, P.her[1] + P.her[2] * .3], hc = [P.him[0] - P.him[2] * .05, P.him[1] + P.him[2] * .2], Q = [lip];
     for (let i = 1; i <= 48; i++) { const u = i / 48, a = PI + u * TAU * 1.6, r = P.him[2] * (.9 - .25 * u); Q.push([lerp(lip[0], hc[0] + cos(a) * r, ease(min(1, u * 3))), lerp(lip[1], hc[1] + sin(a) * r * .5, ease(min(1, u * 3)))]); }

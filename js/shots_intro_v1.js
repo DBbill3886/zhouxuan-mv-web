@@ -12,7 +12,7 @@ function withCam(cx, cy, z, fn, rot = 0) {
 function camAt(sx, sy, z, fn) { withCam(CX() - (sx - CX()) / z, CY() - (sy - CY()) / z, z, fn); }
 // plate drawn into an arbitrary rect (film frames)
 function plateRect(name, x, y, w, h, orient) {
-  const o = orient || (w >= h ? 'L' : 'P'), c = X.ctx;
+  const o = orient || (w >= h ? 'L' : 'P'), c = X.ctx; X.plateName = name;
   drawBoiled(c, `plate_${name}_${o}`, (im, a) => { const s = max(w / im.width, h / im.height); c.save(); c.globalAlpha *= a; c.drawImage(im, x + (w - im.width * s) / 2, y + (h - im.height * s) / 2, im.width * s, im.height * s); c.restore(); });
 }
 // ---------- film geometry (separate L / P compositions) ----------
@@ -26,15 +26,19 @@ function cFaces(w, h, t) {
   plateRect('amber', 0, 0, w, h);
   const P = facesPos(w, h), lt = t - T_F[0], br = sin(t * 1.3) * .006;
   const look = kf(t, [[22.5, 0], [24.0, .6], [25.4, 0]]);
-  figure({ who: 'her', x: P.her[0], y: P.her[1], s: P.her[2], dir: 1, tilt: .12 + br, blink: blinkAt(t, [23.4]), look });
-  figure({ who: 'him', x: P.him[0], y: P.him[1] + sin(t * 1.1) * 2, s: P.him[2], dir: -1, tilt: .02 - br, blink: blinkAt(t, [24.6]) });
+  // 诚实…像是胶片: backlit by the projector's warm light between them; she lowers her head, her hand drifts to her chest
+  X.light = [w * .52, h * .12]; X.rimA = 1; X.rimCol = null;
+  figure({ who: 'her', x: P.her[0], y: P.her[1], s: P.her[2], dir: 1, tilt: .12 + br + .06 * look, arm: { from: 'down', to: 'chest', k: seg(t, 22.6, 24.2) } });
+  figure({ who: 'him', x: P.him[0], y: P.him[1] + sin(t * 1.1) * 2, s: P.him[2], dir: -1, tilt: .02 - br });
 }
 function blinkAt(t, ts) { let b = 0; for (const x of ts) { const d = abs(t - x); if (d < .14) b = max(b, 1 - d / .14); } return b; }
 function cFever(w, h, t) {
   plateRect('amberPlain', 0, 0, w, h);
   const lt = t - T_F[1], L = X.L, s = L ? h * .47 : w * .5, hx = L ? w * .36 : w * .46, hy = L ? h * .42 : h * .36;
-  const f = figure({ who: 'him', x: hx, y: hy, s, dir: 1, tilt: -.06 + .02 * sin(t * 2), brow: .6, blink: blinkAt(t, [27.1]) });
+  // 发烧: the back of his hand to his forehead; the heat glows in the rim, then the cool wash calms it
   const heat = kf(lt, [[0, .25], [1.6, .95], [2.6, .95], [3.6, .45]]);
+  X.light = [w * .95, h * .1]; X.rimCol = mixCol('#FFE4B4', '#FF9A6A', heat * .7);
+  const f = figure({ who: 'him', x: hx, y: hy, s, dir: 1, tilt: -.06 + .02 * sin(t * 2) + .08 * heat, arm: { from: 'hang', to: 'brow', k: seg(lt, .2, 1.3) * (1 - seg(lt, 3.0, 3.9)) }, armB: 'hang' });
   const ch = f.pt([.62, .66]); glow(ch[0], ch[1], s * .22, '#FF6A4A', .18 + heat * .25);
   // 消炎: a cool mist wash breathes in from the far corner and calms the heat (no thermometer)
   const cool = easeIO(seg(lt, 1.9, 3.7));
@@ -46,7 +50,9 @@ function cFever(w, h, t) {
 function cTag(w, h, t) {
   plateRect('amberPlain', 0, 0, w, h); const c = X.ctx; c.fillStyle = rgba('#7A4A20', .18); c.fillRect(0, 0, w, h);
   const lt = t - T_F[2], L = X.L, s = L ? h * .46 : w * .5, hx = L ? w * .42 : w * .45, hy = L ? h * .45 : h * .38, bow = kf(lt, [[0, .05], [1.5, .32]]);
-  const f = figure({ who: 'him', x: hx, y: hy, s, dir: 1, tilt: bow, bodyTilt: bow * .15, blink: .55, brow: -.3 });
+  // 青春已不值一提: he bows, shoulders give, arms slack
+  X.rimCol = null; X.light = [w * .8, -h * .2]; X.rimA = 1 - .6 * easeIO(seg(lt, .5, 3.7));
+  const f = figure({ who: 'him', x: hx, y: hy, s, dir: 1, tilt: bow, bodyTilt: bow * .35, arm: 'slack', armB: 'slack' });
   // 青春不值一提: the frame's colour drains out of him like an over-washed sheet; amber flecks drift off his shoulders
   const bl = easeIO(seg(lt, .5, 3.7)), c2 = X.ctx;
   for (let i = 0; i < 16; i++) { const u = ((lt * .22 + hash(i * 5.3)) % 1), sx = hx + (hash(i) - .5) * s * .9, x = sx + sin(u * 6 + i) * s * .08 + u * s * .25, y = hy + s * .9 + u * h * .5;
@@ -143,7 +149,10 @@ function shotMud(t, lt, d, merged) {
   plate('mud');
   const sink = ease(seg(lt, .3, d)), hx = O(1000, 560), hy = O(440, 860) + sink * O(170, 240), s = O(330, 380);
   const surf = O(700, 1260) - sin(t * 1.2) * 4;
-  figure({ who: 'him', x: hx, y: hy, s, dir: 1, tilt: -.12 - sink * .12, brow: .9, look: -.4, blink: blinkAt(t, [47.2]) });
+  // 也斗争过: one arm strains up out of the mud, then gives in as he sinks
+  X.light = { dir: [.35, -1] }; X.rimA = .8;
+  const fight = seg(lt, .2, 1.0) * (1 - easeIO(seg(lt, 2.2, 3.6)));
+  figure({ who: 'him', x: hx, y: hy, s, dir: 1, tilt: -.12 - sink * .12, arm: { from: 'hang', to: 'up', k: fight }, armB: { from: 'hang', to: 'reachHi', k: fight * .6 } });
   // mud surface over the body
   const P = [[X.VIS.x0 - 50, surf]]; for (let i = 0; i <= 24; i++) { const x = lerp(X.VIS.x0 - 50, X.VIS.x1 + 50, i / 24); P.push([x, surf + sin(i * .9 + t * 1.5) * 6 + (abs(x - hx) < s * .8 ? -10 : 0)]); }
   P.push([X.VIS.x1 + 50, X.VIS.y1 + 50], [X.VIS.x0 - 50, X.VIS.y1 + 50]); wash(P, '#5A4430', { tex: .9, edge: .35, edgeW: 16 });
@@ -197,7 +206,7 @@ function shotChess(t, lt, d) {
   const herP = hp(herPrev, [4, 4], seg(t, 53.1, 53.6)), himP = hp([2, 6], [3, 5], seg(t, 53.6, 54.1));
   const piece = (who, p, s, col) => { const base = ellP(p[0], p[1], s * .55, s * .16, 24), ped = [[p[0] - s * .42, p[1]], [p[0] + s * .42, p[1]], [p[0] + s * .3, p[1] - s * .5], [p[0] - s * .3, p[1] - s * .5]];
     shape(ped, col, { key: who + 'ped', lw: 2.4 }); shape(base, col, { key: who + 'base', lw: 2.4 });
-    figure({ who, x: p[0] + (who === 'her' ? s * .03 : -s * .03), y: p[1] - s * .5 - .78 * s * .62, s: s * .62, dir: who === 'her' ? -1 : 1, noBody: true, tilt: who === 'him' ? -.1 : .05, key: 'pc' }); };
+    X.light = { dir: [0, -1] }; figure({ who, x: p[0] + (who === 'her' ? s * .03 : -s * .03), y: p[1] - s * .5 - .78 * s * .62, s: s * .62, dir: who === 'her' ? -1 : 1, noBody: true, tilt: who === 'him' ? -.1 : .05, rimA: .6 }); };
   const qa = 1 - seg(t, 55.2, 55.8);
   if (qa > 0) { c.save(); c.globalAlpha = qa; piece('him', himP, O(120, 140), '#3A3D4A'); piece('her', herP, O(170, 200), ZX.coral); c.restore(); }
   // emerge from the mud

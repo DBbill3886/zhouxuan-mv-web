@@ -4,7 +4,7 @@
    the falling characters = the staff notes; the rain = the credits; the film strip returns (as in the intro), grey. */
 'use strict';
 const HOR = () => O(660, 1120);
-const OUT = () => X.L ? { him: [1380, 600, 430], her: [520, HOR() - 44, 34] } : { him: [700, 1380, 400], her: [300, HOR() - 44, 34] };
+const OUT = () => X.L ? { him: [1380, 480, 300], her: [520, HOR() - 44, 34] } : { him: [690, 1240, 290], her: [300, HOR() - 44, 34] };
 function lake(t, dark = 0) {
   const V0 = X.VIS, h = HOR(), c = X.ctx;
   plate('rain'); if (dark > 0) plate('rainDark', { alpha: dark });
@@ -12,13 +12,15 @@ function lake(t, dark = 0) {
   ink([[V0.x0 - 30, h], [CX(), h + 1], [V0.x1 + 30, h]], 1.8, { col: '#4A5058', key: 'hz', taper: [0, 0] });
   for (let i = 0; i < 5; i++) { const y = h + O(60, 90) + i * O(80, 120); ink([[V0.x0 + (hash(i) * .4) * (V0.x1 - V0.x0), y], [V0.x0 + (.3 + hash(i) * .4) * (V0.x1 - V0.x0), y + 1]], 1.4, { col: '#6E757B', key: 'lk' + i, alpha: .6 }); }
 }
-function herFar(t, a = 1, s) { const P = OUT().her, ss = s || P[2]; figure({ who: 'her', x: P[0], y: HOR() - 3.25 * ss + 2, s: ss, dir: 1, alpha: a, body: 'herBody', lw: .03 }); return P; }
-function himOut(t, o = {}) { const P = OUT().him; return figure({ who: 'him', x: o.x ?? P[0], y: o.y ?? P[1], s: o.s ?? P[2], dir: -1, tilt: o.tilt ?? -.04, body: 'himBodyGray', blink: o.blink ?? blinkAt(t, [238.4, 246.0, 250.2, 257.9]), look: o.look ?? .2, brow: o.brow ?? .3 }); }
+// she is a small full figure on the far shore (feet on the horizon); grey sky light from above-behind
+function herFar(t, a = 1, s) { const P = OUT().her, ss = (s || P[2]) * .62; X.light = { dir: [.3, -1] }; X.rimA = .7; figure({ who: 'her', x: P[0], y: anchorOn('her', HOR() + 1, ss), s: ss, dir: 1, alpha: a, full: true, legs: 'stand', arm: 'hug', wind: .7 }); return P; }
+function himOut(t, o = {}) { const P = OUT().him; X.light = o.light ?? { dir: [-.55, -.85] }; X.rimA = o.rimA ?? .85; X.rimCol = o.rimCol ?? null;
+  return figure({ who: 'him', x: o.x ?? P[0], y: o.y ?? P[1], s: o.s ?? P[2], dir: -1, tilt: o.tilt ?? -.04, arm: o.arm ?? 'pocket', armB: o.armB ?? 'pocket', lightR: o.lightR }); }
 // ---------- lake ----------
 function shotLake(t, lt, d) {
   lake(t); const B8 = R8POS(), P = OUT().him, k = easeIO(seg(lt, .3, 2.2));
   herFar(t, easeOut(seg(lt, 1.6, 3.2)));
-  himOut(t, { x: lerp(B8.him[0], P[0], k), y: lerp(B8.him[1], P[1], k), s: lerp(B8.him[2], P[2], k), look: kf(t, [[239.85, .1], [240.5, .6]]) });
+  himOut(t, { x: lerp(B8.him[0], P[0], k), y: lerp(B8.him[1], P[1], k), s: lerp(B8.him[2], P[2], k), tilt: kf(t, [[239.85, -.04], [240.8, .04]]) });
   // he looks towards her: a faint dotted line of sight (never reaches)
   const sk = easeIO(seg(t, 239.85, 242.3)); if (sk > 0) { const c = X.ctx, a = [P[0] - P[2] * .45, P[1] - P[2] * .05], b = OUT().her; for (let i = 0; i < 26 * sk; i++) { const u = i / 30; c.fillStyle = rgba(ZX.ink, .45); c.beginPath(); c.arc(lerp(a[0], b[0], u), lerp(a[1], b[1] - 60, u), 3, 0, TAU); c.fill(); } }
   X.mix = 1 - easeOut(seg(lt, 0, 1.3)); if (X.mix > 0) chorusDensity(235.77, 4.08, 4.08, 'R8', true);
@@ -31,7 +33,8 @@ function smokePath(t, k) { const P = OUT(), lip = [P.him[0] - P.him[2] * .42, P.
     else { const v = (u - .7) / .3, a = v * TAU * 1.15; x = H[0] + cos(a) * 70; y = H[1] + sin(a) * 30 + v * 20; }
     Q.push([x, y]); } return Q; }
 function shotSmoke(t, lt, d) {
-  lake(t); herFar(t); himOut(t, { look: .5 });
+  // 期待我吐的烟能够将你抱紧: the cigarette comes to his lips; the smoke goes to hold her
+  lake(t); herFar(t); himOut(t, { arm: { from: 'pocket', via: 'down', to: 'mouth', k: easeIO(seg(lt, 0, .7)) * (1 - easeIO(seg(lt, 2.4, 3.4))) } });
   const k = easeOut(seg(lt, .2, d - .4)), Q = smokePath(t, k);
   if (Q.length > 2) { for (let j = 0; j < 3; j++) ink(Q.map(([x, y], i) => [x + j * 6, y + j * 10 + sin(i * .4 + t * 2 + j) * 6]), 7 - j * 2, { col: j ? '#B9BDBF' : '#9A9FA3', key: 'sm' + j, alpha: .8 - j * .2 });
     for (let i = 0; i < Q.length; i += 5) { const [x, y] = Q[i]; X.ctx.save(); X.ctx.globalAlpha = .35; wash(ellP(x, y, 30 + i, 18 + i * .4, 16), '#C6C8C5', { tex: .7, edge: 0 }); X.ctx.restore(); } }
@@ -39,7 +42,7 @@ function shotSmoke(t, lt, d) {
 }
 // ---------- clouds: the smoke goes up and darkens the sky ----------
 function shotClouds(t, lt, d) {
-  const dk = easeIO(seg(lt, .3, d)); lake(t, dk); herFar(t); himOut(t, { look: .9, tilt: -.12 });
+  const dk = easeIO(seg(lt, .3, d)); lake(t, dk); herFar(t); himOut(t, { tilt: -.12 - .1 * dk, rimA: .85 - .3 * dk });
   const rise = easeIO(seg(lt, 0, 1.4)), Q = smokePath(t, 1);
   if (rise < 1) for (let j = 0; j < 2; j++) ink(Q.map(([x, y]) => [x, y - rise * O(400, 600)]), 6 - j * 2, { col: '#9A9FA3', key: 'sm' + j, alpha: (1 - rise) * .8 });
   const Cs = X.L ? [[420, 160, 1.6], [900, 110, 1.9], [1450, 170, 1.6], [700, 300, 1.2], [1200, 320, 1.1]] : [[240, 300, 1.2], [760, 240, 1.3], [500, 480, 1.1], [860, 560, .9]];
@@ -56,7 +59,8 @@ function dropsAt(t, list, col = '#4A5058') {
     else { const ra = age - .45; for (let j = 0; j < 3; j++) { const r = (ra * 160 + j * 40), a = clamp(1 - ra / 2.2) * (1 - j * .25); if (r > 0) ripple(x, y1, r, a, 'dr' + i + j); } } });
 }
 function shotDrops(t, lt, d) {
-  lake(t, 1); herFar(t); himOut(t, { look: .9, tilt: -.16, blink: blinkAt(t, [252.0, 254.3]) });
+  // 雨总会落下 · 一滴一滴: he holds out his palm and waits for the drops
+  lake(t, 1); herFar(t); himOut(t, { tilt: -.16, arm: { from: 'pocket', to: [1.15, 2.05, 1.9, -.4, 1], k: easeIO(seg(lt, .2, 1.2)) } });
   dropsAt(t, DROP_T); if (lt > d - .8) rain(floor(60 * seg(lt, d - .8, d)), rgba('#4A5058', .7), 1, .14, 5);
   X.lyr = X.L ? {} : { y: HOR() - 230 };   // portrait: lyric sits in the sky, clear of his coat
 }
@@ -66,11 +70,14 @@ function shotReflect(t, lt, d) {
   lake(t, 1); rain(80, rgba('#4A5058', .65), 1, .14, 5);
   const g = easeIO(seg(lt, 0, 1.2)), s = lerp(P[2], O(130, 130), g), x = lerp(P[0], O(700, 820), g), fy = h - 3.25 * s + 3;
   // her reflection: the same figure mirrored at the waterline, sliced and shifted by ripples; it breaks on 看不清
-  const br = easeIn(seg(t, 257.0, 259.2)), band = s * .16;
+  // 看不清了倒影: she stands at the water's edge holding herself in the rain; her reflection breaks
+  const br = easeIn(seg(t, 257.0, 259.2)), band = s * .16; X.light = { dir: [.25, -1] }; X.rimA = .75;
+  const HO = { x, y: anchorOn('her', h + 1, s * .62), s: s * .62, dir: 1, full: true, legs: 'stand', arm: 'hug', tilt: .06 + .08 * br, wind: .8 };
+  const RL = figLayer({ who: 'her', ...HO }, q => { q.translate(0, 2 * h); q.scale(1, -1); }), k = c.getTransform().a;   // mirrored once, then sliced
   for (let i = 0; i < 22; i++) { const y0 = h + i * band; if (y0 > h + 3.4 * s) break; const sh = sin(i * 1.7 + t * 4) * (3 + br * 50) * (1 + i * .12);
-    c.save(); c.beginPath(); c.rect(V0.x0 - 50, y0, V0.x1 - V0.x0 + 100, band - 1 - 4 * br); c.clip(); c.translate(sh, 2 * h); c.scale(1, -1);
-    c.globalAlpha = .5 * (1 - br * .65) * (1 - i / 26); figure({ who: 'her', x, y: fy, s, dir: 1, body: 'herBody', key: 'rf' }); c.restore(); }
-  figure({ who: 'her', x, y: fy, s, dir: 1, body: 'herBody', blink: blinkAt(t, [257.2]), look: -.2 });
+    c.save(); c.beginPath(); c.rect(V0.x0 - 50, y0, V0.x1 - V0.x0 + 100, band - 1 - 4 * br); c.clip(); c.setTransform(1, 0, 0, 1, sh * k, 0);
+    c.globalAlpha *= .5 * (1 - br * .65) * (1 - i / 26); c.drawImage(RL, 0, 0); c.restore(); }
+  figure({ who: 'her', ...HO });
   for (let i = 0; i < 4; i++) { const ph = (t * .5 + i * .25) % 1; ripple(x + (i - 1.5) * s * .6, h + s * (.5 + i * .6), s * (.5 + ph * 1.4) * (1 + br), (1 - ph) * .9, 'rr' + i); }
   dropsAt(t, [255.9, 256.6, 257.1, 257.6, 258.1, 258.5]);
   X.lyr = X.L ? {} : { y: HOR() - 230 };   // portrait: lyric sits in the sky, clear of his coat
@@ -78,11 +85,12 @@ function shotReflect(t, lt, d) {
 // ---------- his words fall into the lake ----------
 function shotWords(t, lt, d) {
   lake(t, 1); rain(90, rgba('#4A5058', .65), 1, .14, 5); herFar(t, 1 - seg(lt, 0, d) * .6);
-  const f = himOut(t, { look: .1, tilt: .1, brow: .6, blink: .2 }), c = X.ctx, P = OUT().him, lip = f.pt([.78, .74]), words = ['我', '想', '你', '别', '走'];
+  // 我的心里话终究让你扫兴: he reaches a little towards her as the words fall from his lips, then the hand drops
+  const f = himOut(t, { tilt: .1, arm: { from: 'pocket', to: [1.05, 2.05, 2.15, .3, 1], k: easeIO(seg(lt, .2, 1.0)) * (1 - easeIO(seg(lt, 2.6, 3.5))) } }), c = X.ctx, P = OUT().him, lip = f.pt([.78, .74]), words = ['我', '想', '你', '别', '走'];
   words.forEach((w, i) => { const ts = 259.9 + i * .5, age = t - ts; if (age < 0) return; const y = lip[1] + age * age * 260 + age * 40, x = lip[0] - 30 - i * 12 - age * 70, wet = seg(y, HOR() + 40, HOR() + 260);
     c.save(); c.globalAlpha = 1 - wet; c.fillStyle = ZX.ink; c.font = `${O(44, 48)}px ${ZX.fCN}`; c.textAlign = 'center'; c.fillText(w, x, y); c.restore();
     if (wet > 0) ripple(x, HOR() + 160 + i * 20, 30 + wet * 120, 1 - wet, 'wr' + i); });
-  X.lyr = X.L ? {} : { y: HOR() - 230 };   // portrait: lyric sits in the sky, clear of his coat
+  X.lyr = X.L ? { y: HOR() - 400 } : { y: HOR() - 230 };   // the lyric sits high in the sky, clear of his reaching hand and of her
 }
 // ---------- the high note ----------
 // 你是我永远唱不上去的高音 — no notation: she becomes a small coral light on the far horizon and rises out of reach;
@@ -98,7 +106,9 @@ function shotHighNote(t, lt, d) {
   glow(lx, ly, O(220, 200), '#FF8A5A', .55 * la); glow(lx, ly, O(46, 42), '#FFD2B0', .9 * la);
   if (la > 0) wash(ellP(lx, ly, 9, 9, 14), ZX.coral, { tex: 0, edge: 0, alpha: la });
   // him: looking up, eyes open
-  const f = himOut(t, { look: .9, tilt: -.2, blink: blinkAt(t, [266.2, 270.4]) }), lip = f.pt([.80, .73]);
+  // 唱不上去的高音: he looks up; his hand rises after the light, and sinks back as the thread dissolves. The rim is her light.
+  const reachUp = easeIO(seg(lt, 1.2, 3.6)) * (1 - easeIO(seg(lt, 6.4, 10.2)));
+  const f = himOut(t, { tilt: -.2 - .06 * reachUp, light: [lx, ly], rimA: .45 + .9 * la, rimCol: '#FFC4A6', lightR: O(2200, 2600), arm: { from: 'pocket', to: X.L ? 'reachHi' : [2.4, 2.7, 2.75, .15, 1], k: reachUp } }), lip = f.pt([.80, .73]);
   // the thread: climbs (draw-on), tightens as the light rises, then from the top down it lets go as drops of coral rain
   const climb = easeOut(seg(lt, 1.0, 3.2)), taut = easeIO(seg(lt, 2.5, 6.0)), cut = 1 - .62 * easeIO(seg(lt, 6.2, 10.6));
   const sag = O(170, 220) * (1 - taut * .85) + O(120, 160) * (1 - cut), N = 70;
@@ -121,7 +131,7 @@ function shotHighNote(t, lt, d) {
 function shotCredits(t, lt, d) {
   const c = X.ctx, V0 = X.VIS;
   lake(t, .5); rain(110, rgba('#4A5058', .6), 1, .14, 5);
-  const ha = 1 - seg(lt, 0, 2); if (ha > 0) { c.save(); c.globalAlpha = ha; himOut(t, { look: .9, tilt: -.2 }); c.restore(); }
+  const ha = 1 - seg(lt, 0, 2); if (ha > 0) { c.save(); c.globalAlpha = ha; himOut(t, { tilt: -.2 }); c.restore(); }
   // credits, two at a time, centred on the lake
   const per = 1.0, i0 = floor(seg(lt, .8, 9.5) * CREDITS.length / 2) * 2;
   c.save(); c.textAlign = 'center'; c.fillStyle = ZX.ink; c.textBaseline = 'middle';
@@ -132,7 +142,7 @@ function shotCredits(t, lt, d) {
   const sk = seg(lt, 9.6, 13.5); if (sk > 0) {
     const F = FILM(), off = lerp(-3.2, 0, easeOut(sk)), z = lerp(.5, .62, easeIO(seg(lt, 9.6, d)));
     withCam(F.cx, F.cy, z, () => { c.save(); c.globalAlpha = easeOut(seg(lt, 9.6, 10.4));
-      filmStrip({ ...F, n0: -5, n1: 3, off, content: (i, w, h) => { plateRect('rain', 0, 0, w, h); const P = facesPos(w, h); if (i % 2 === 0) { figure({ who: 'her', x: P.her[0], y: P.her[1], s: P.her[2], dir: 1, tilt: .12, body: 'herBodyGray', blink: blinkAt(t, [285.3]) }); figure({ who: 'him', x: P.him[0], y: P.him[1], s: P.him[2], dir: -1, body: 'himBodyGray', blink: blinkAt(t, [286.1]) }); } else figure({ who: 'him', x: w * .4, y: h * .42, s: min(w, h) * .45, dir: 1, body: 'himBodyGray' }); } });
+      filmStrip({ ...F, n0: -5, n1: 3, off, content: (i, w, h) => { plateRect('rain', 0, 0, w, h); const P = facesPos(w, h); X.light = [w * .52, h * .12]; X.rimA = .8; if (i % 2 === 0) { figure({ who: 'her', x: P.her[0], y: P.her[1], s: P.her[2], dir: 1, tilt: .12, arm: 'chest', lite: true }); figure({ who: 'him', x: P.him[0], y: P.him[1], s: P.him[2], dir: -1, lite: true }); } else figure({ who: 'him', x: w * .4, y: h * .42, s: min(w, h) * .45, dir: 1, arm: 'hang', armB: 'hang', lite: true }); } });
       c.restore(); });
   }
   // end card

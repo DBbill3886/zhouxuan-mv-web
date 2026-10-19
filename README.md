@@ -11,3 +11,10 @@
 结构：`js/core.js`（风格内核）`fig.js`（人物）`props.js`（道具）`post.js`（纸/Riso 着色器）
 `shots_*.js`（各段镜头与镜头间的桥接物）`timeline.js`（镜头表）`main.js`（时钟、布局、歌词、UI）。
 全部画面由代码生成，无 AI 生成图像。
+
+
+## Pass 6 — silhouettes
+All figures are backlit silhouettes with a rim light on the side facing each shot's light source (see STYLE_GUIDE.md › Pass 6).
+`figure(o)` keeps the old API (`who x y s dir tilt arm armB full walk light rimA …`), so every shot calls it the same way; `figFlat` draws the
+same silhouette into the Riso layers. The old sprite/ink face figures and `assets/sprites` are retired.
+Dev: `node tools/figtest.mjs 1920x1080 out.png "<shot body js>" [t]` renders a one-off figure test.

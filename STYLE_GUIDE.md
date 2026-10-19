@@ -57,3 +57,17 @@
 - Full figures (8 heads, `full:true`) wherever the whole body is on screen (interlude orbit); half-body elsewhere.
 - Textures never re-randomise per frame: wash granulation is anchored to the shape; boil is continuous; grain is static.
 - Lyrics / chorus captions are clamped above the control bar (`X.safeB`).
+
+## Pass 6 — backlit silhouettes (supersedes the pass-5 figure language)
+- Every character is a flat backlit silhouette (`js/fig.js`): one dark fill from the scene palette (`SILPAL[plate]`), **no facial features**.
+- Rim light only on the edge that faces the shot's light source: mask minus itself shifted along the light direction, plus a soft inner glow
+  and a faint bloom. Each shot sets `X.light` (a point `[x,y]` or `{dir:[dx,dy]}`), `X.rimA`, `X.rimCol`; a point light falls off with `lightR`.
+- Her: long hair that lifts in the wind, a dress or coat, a small deep-coral scarf at the neck (`#7A2F28`, her colour). Him: short hair, 3/4 jacket
+  with stand collar, tapered trousers with a knee fold and ankle break, contrapposto `rest` stance.
+- Gestures are read only through the outline, so arms leave the body: presets `down hang back pocket reach reachLow reachHi up chest mouth ear hug brow out slack`
+  (array `[upper, fore, hand, curl, showHand, foreLen]`), eased with `{from,to,k}`.
+- Busts dissolve below the waist (fade applied after the rim, so the fade edge is never lit); full figures stand with `anchorOn(who, groundY, s)`.
+- Motion: breathing, slow sway, wind in hair and hem, walk gait (`walk`, `walkA` blends in). All deterministic in t — no per-frame random.
+- Riso posters use the same silhouettes via `figFlat` (density layers), so print and paint share one figure.
+- Kept motifs: frost breath for 言语刺骨 (he cools CORAL→MIST from the hands up, arms closing in), the rising coral light + red thread for 高音
+  (his hand rises after it and sinks as the thread dissolves), red line with ink bleed in the leek scene, no scissors.

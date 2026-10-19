@@ -13,7 +13,9 @@ function lampsScene(t, cone = 1) {
   return [bx, by];
 }
 function himUnderLamp(t, a = 1) {
-  return figure({ who: 'him', x: O(1380, 640), y: O(690, 1290), s: O(300, 330), dir: -1, tilt: -.22 + .015 * sin(t * 1.1), blink: blinkAt(t, [57.9, 61.2]), look: .3, alpha: a, skinTint: '#F3D7A2' });
+  // 关上灯一盏一盏: he looks up into the last lamp; its light rims his face and shoulders
+  const L4 = LAMPS()[4]; X.light = [L4[0], L4[1] + 60]; X.rimA = 1.15;
+  return figure({ who: 'him', x: O(1380, 640), y: O(690, 1290), s: O(300, 330), dir: -1, tilt: -.22 + .015 * sin(t * 1.1), alpha: a, lightR: O(900, 1000) });
 }
 function shotLamps(t, lt, d) {
   plate('night');
@@ -30,12 +32,16 @@ function splitScene(t, lt) {
   c.save(); c.beginPath(); c.rect(V0.x0 - 40, V0.y0 - 40, S.x - V0.x0 + 40, V0.y1 - V0.y0 + 80); c.clip();
   plate('night'); plate('amber', { alpha: open });
   if (open > 0) { const hk = kf(t, [[60.4, 0], [60.9, 1], [61.6, 1], [62.0, .4]]);
-    figure({ who: 'her', x: S.her[0], y: S.her[1] + (1 - open) * 120, s: S.her[2], dir: 1, tilt: .1 - .04 * hk, blink: blinkAt(t, [59.8, 62.2]), alpha: open, look: .4 });
+    // 憧憬: in the warm half she lifts her face to the light, a hand at her heart
+    X.light = [S.her[0] + S.her[2] * .9, S.her[1] - S.her[2] * .6]; X.rimA = 1;
+    figure({ who: 'her', x: S.her[0], y: S.her[1] + (1 - open) * 120, s: S.her[2], dir: 1, tilt: .1 - .14 * hk, alpha: open, arm: { from: 'down', to: 'chest', k: seg(t, 59.4, 60.6) } });
     glow(S.her[0] + S.her[2] * .3, S.her[1] - S.her[2] * .2, S.her[2] * 1.4, '#FFD08A', .25 + .2 * hk); }
   c.restore();
   c.save(); c.beginPath(); c.rect(S.x, V0.y0 - 40, V0.x1 - S.x + 40, V0.y1 - V0.y0 + 80); c.clip();
   plate('night'); const mk = kf(t, [[61.3, 0], [61.8, 1]]);
-  figure({ who: 'him', x: S.him[0], y: S.him[1], s: S.him[2], dir: -1, tilt: -.05 + .05 * mk, blink: blinkAt(t, [60.2]) * 1 + mk * .55, brow: .4, alpha: ease(seg(lt, .95, 1.7)) });
+  // 回忆: in the night half he lowers his head; the old lamps behind him are memory
+  X.light = [S.x + O(400, 260), O(160, 380)]; X.rimA = .55 + .45 * mk; X.rimCol = '#E8B27A';
+  figure({ who: 'him', x: S.him[0], y: S.him[1], s: S.him[2], dir: -1, tilt: -.05 + .16 * mk, alpha: ease(seg(lt, .95, 1.7)) });
   // memory: faint lamp ghosts on his side
   for (let i = 0; i < 3; i++) glow(S.x + (i + 1) * O(200, 130), O(160, 380) + i * 40, 60, '#C47A3A', .25 * mk);
   c.restore();
@@ -135,7 +141,9 @@ function shotDawn(t, lt, d) {
   c.save(); c.globalAlpha = pa; dawnClouds(t); c.restore();
   // him, small, looking up at the clouds; every cloud bump is a reminder
   const hx = O(1460, 760), hy = O(800, 1450), s = O(230, 250);
-  const sh = pulse(t, 4); figure({ who: 'him', x: hx, y: hy + enter * 400, s, dir: -1, tilt: -.28, brow: .6 + sh * .3, blink: blinkAt(t, [70.4]), look: .5 });
+  // 乌云…不停的提醒: small under the dawn, looking up; every cloud bump is a nudge that makes him flinch a little
+  const sh = pulse(t, 4); X.light = { dir: [-.2, -1] }; X.rimA = .8;
+  figure({ who: 'him', x: hx, y: hy + enter * 400, s, dir: -1, tilt: -.28 + sh * .04 });
   X.dark = true; X.lyr = {};
 }
 // ---------- masks: the clouds come down as smiling faces, then melt into mud ----------
@@ -152,7 +160,10 @@ function shotMasks(t, lt, d) {
   plate('dawn'); fillAll('#3A3D4A', .25 * seg(lt, 0, 1.5));
   const k = easeIO(seg(lt, 0, 1.4)), melt = easeIn(seg(t, MELT_T, MELT_T + 1.6));
   const hx = O(960, 540), hy = O(560, 1180), s = O(300, 300);
-  figure({ who: 'him', x: lerp(O(1460, 760), hx, k), y: lerp(O(800, 1450), hy, k), s: lerp(O(230, 250), s, k), dir: -1, tilt: lerp(-.28, .08, k), brow: .8, blink: blinkAt(t, [72.6, 74.3]), look: -.3 });
+  // 他们说…: the smiling masks crowd him and he covers his ears; when the smiles melt to mud his hands fall
+  const cover = easeIO(seg(lt, .6, 1.4)) * (1 - easeIO(seg(t, MELT_T + .2, MELT_T + 1.2)));
+  X.light = { dir: [0, -1] }; X.rimA = .8;
+  figure({ who: 'him', x: lerp(O(1460, 760), hx, k), y: lerp(O(800, 1450), hy, k), s: lerp(O(230, 250), s, k), dir: -1, tilt: lerp(-.28, .08, k) + .1 * cover, arm: { from: 'pocket', to: 'ear', k: cover }, armB: { from: 'pocket', to: 'ear', k: cover } });
   const pos = dawnClouds(t, k, melt);
   if (melt > 0) { maskDrips(t, pos, melt); for (const [x, y, ss] of pos) cloud(x, y, ss, '#5A4430', melt * .95, 'mm' + x); }
   X.dark = true; X.lyr = {};
@@ -189,7 +200,9 @@ function shotPuddle(t, lt, d) {
   const df = seg(t, POP_T - .55, POP_T); if (df > 0 && df < 1) { const y = lerp(V0.y0 - 30, B.y0, easeIn(df)); wash(ellP(B.x + 6, y, 7, 15, 12), '#2E2219', { tex: .3, edge: 0, alpha: .85 }); }
   for (let j = 0; j < 3; j++) { const u = seg(t, POP_T + j * .18, POP_T + j * .18 + 1.1); if (u > 0 && u < 1) ink(ellP(B.x + 6, B.y0, RX * .15 + u * RX * .95, (RY * .15 + u * RY * .95), 40).slice(0, 41), 1.8, { col: ZX.cream, key: 'pr' + j, alpha: (1 - u) * .7 * pud }); }
   // he watches it rise and fall (L: right; P: bottom)
-  const mv = easeIO(seg(lt, 0, 1.1)); figure({ who: 'him', x: lerp(O(960, 540), O(1430, 760), mv), y: lerp(O(560, 1180), O(520, 1300), mv), s: lerp(300, O(290, 260), mv), dir: -1, tilt: lerp(.08, kf(lt, [[1, -.05], [2.2, -.22], [3.0, -.22], [3.8, .12]]), mv), brow: .5, blink: blinkAt(t, [76.4, 79.0]), look: .4 });
+  // 廉价的快乐: he looks down at the sun in the puddle; when it breaks his head drops
+  const mv = easeIO(seg(lt, 0, 1.1)); X.light = [B.x, B.y0]; X.rimA = .5 + .7 * bloom * (1 - sh * .6); X.rimCol = '#FFC27A';
+  figure({ who: 'him', x: lerp(O(960, 540), O(1430, 760), mv), y: lerp(O(560, 1180), O(520, 1300), mv), s: lerp(300, O(290, 260), mv), dir: -1, tilt: lerp(.08, kf(lt, [[1, -.05], [2.2, -.22], [3.0, -.22], [3.8, .12]]), mv) + .1 * sh, lightR: O(1400, 1400) });
   X.dark = true; X.lyr = {};
 }
 // ---------- eyes: the last of the coral is her sweater; two faces, a gaze, a kind lie (→ Riso) ----------
@@ -202,8 +215,11 @@ function shotEyes(t, lt, d) {
   plate('night'); glow(O(960, 540), O(420, 880), O(700, 800), '#FFB45E', .22); eyesLamp(easeOut(seg(lt, .5, 1.4)));
   const push = 1 + .06 * ease(seg(lt, 0, d)), cx = O(967, 550), cy = O(420, 880);
   withCam(cx, cy, push, () => {
-    figure({ who: 'her', x: P.her[0], y: P.her[1], s: P.her[2], dir: 1, tilt: .02, blink: blinkAt(t, [80.6, 84.2]), look: .2 });
-    figure({ who: 'him', x: P.him[0], y: P.him[1], s: P.him[2], dir: -1, tilt: -.02, blink: blinkAt(t, [82.9]), look: .5, brow: .2 });
+    // 凝视你眼睛 / 善意的谎言我相信: face to face in the lamp's glow; she almost reaches for him, he does not move
+    X.light = [O(960, 540), O(330, 600)]; X.rimA = 1.1;
+    const believe = easeIO(seg(t, 81.6, 83.4));
+    figure({ who: 'her', x: P.her[0], y: P.her[1], s: P.her[2], dir: 1, tilt: .02 + .04 * believe, arm: { from: 'down', to: 'reachLow', k: believe }, lightR: O(1600, 1800) });
+    figure({ who: 'him', x: P.him[0], y: P.him[1], s: P.him[2], dir: -1, tilt: -.02, lightR: O(1600, 1800) });
     // the kind lie: a coral thread leaves her lips and winds around him (周旋)
     const k = easeIO(seg(t, 81.3, 84.8)); if (k > 0) {
       const lip = [P.her[0] + P.her[2] * .34, P.her[1] + P.her[2] * .3], hc = [P.him[0] + P.him[2] * .05 * -1, P.him[1] + P.him[2] * .2], Q = [lip];
