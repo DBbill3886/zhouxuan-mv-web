@@ -3,31 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f0e4cd">
+<meta name="theme-color" content="#EEE6D4">
 <title>周旋 · 王以太 / 艾热 AIR — Web MV</title>
-<meta name="description" content="《周旋》网页实时动画 MV：奶油纸、墨蓝、一根褪色的红线、巨大的圆。全部由代码绘制。">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23f0e4cd%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2211%22 fill=%22%23172444%22/%3E%3Cpath d=%22M3 27 C10 20 20 30 29 22%22 stroke=%22%23c94c38%22 stroke-width=%222.4%22 fill=%22none%22/%3E%3C/svg%3E">
+<meta name="description" content="《周旋》网页实时 MV：纸上水彩与沸腾墨线（主歌）× 双色 Riso 巨字海报（副歌）。全部由代码绘制。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23EEE6D4%22/%3E%3Ccircle cx=%2212%22 cy=%2216%22 r=%229%22 fill=%22%235C7FA8%22 fill-opacity=%22.9%22/%3E%3Ccircle cx=%2220%22 cy=%2216%22 r=%229%22 fill=%22%23E0563F%22 fill-opacity=%22.85%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="fonts/fonts.css">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <canvas id="stage" aria-label="周旋 动画 MV"></canvas>
-<div id="grain" aria-hidden="true"></div><div id="vig" aria-hidden="true"></div>
 <audio id="audio" src="audio/zhouxuan.mp3" preload="auto"></audio>
 
 <div id="start" role="button" tabindex="0" aria-label="开始播放">
-  <svg class="poster" viewBox="0 120 1000 640" aria-hidden="true">
-    <line class="hz" x1="40" y1="720" x2="960" y2="720"/>
-    <circle class="sun" cx="500" cy="470" r="250"/>
-    <path class="thread" d="M140 720 C 200 560, 300 220, 520 170 S 860 260, 820 470 C 805 560, 735 590, 742 540"/>
-    <text class="ttl" x="500" y="535" text-anchor="middle">周旋</text>
-    <text class="sub" x="500" y="600" text-anchor="middle">ZHOU · XUAN</text>
-  </svg>
-  <div class="meta">
-    <div class="artist">王以太 / 艾热 AIR</div>
-    <div class="go"><span class="dot"></span><span>点击开始</span></div>
-    <div class="hint">网页实时绘制 · 建议佩戴耳机<span class="mob"> · 横屏观看更佳</span></div>
+  <div class="strip top"></div>
+  <div class="title">
+    <div class="kicker">ZHOU XUAN — A WEB MUSIC VIDEO</div>
+    <h1>周旋</h1>
+    <div class="by">王以太 / 艾热 AIR</div>
   </div>
+  <div class="strip bot"></div>
+  <div class="go"><span class="dot"></span><span>点击开始</span></div>
+  <div class="hint">纸上水彩 × 双色 Riso · 全部由代码实时绘制 · 建议佩戴耳机</div>
+  <div class="load" id="load">载入中…</div>
 </div>
 
 <div id="bar">
@@ -39,16 +36,18 @@
   <button id="fs" aria-label="全屏"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke-width="2" stroke-linecap="round"/></svg></button>
 </div>
 <div id="end"><button id="replay">↺ 再看一遍</button></div>
-<div id="buf"></div>
 
 <script src="js/lyrics.js"></script>
-<script src="js/lib.js"></script>
-<script src="js/engine.js"></script>
-<script src="js/scenes_a.js"></script>
-<script src="js/scenes_b.js"></script>
-<script src="js/scenes_ch.js"></script>
-<script src="js/scenes_c1.js"></script>
-<script src="js/scenes_c2.js"></script>
+<script src="js/geo.js"></script>
+<script src="js/core.js"></script>
+<script src="js/fig.js"></script>
+<script src="js/props.js"></script>
+<script src="js/post.js"></script>
+<script src="js/shots_intro_v1.js"></script>
+<script src="js/shots_night.js"></script>
+<script src="js/shots_chorus.js"></script>
+<script src="js/shots_v2.js"></script>
+<script src="js/shots_outro.js"></script>
 <script src="js/timeline.js"></script>
 <script src="js/main.js"></script>
 </body>

@@ -1,12 +1,13 @@
-# 周旋 · Web MV
+# 周旋 · Web MV（水彩墨线 × 双色 Riso）
 
-《周旋》（王以太 / 艾热 AIR）网页版实时动画 MV。纯静态站点：`index.html` + 原生 JS（Canvas 2D），无构建步骤；直接双击 `index.html` 或用任意静态服务器打开即可。
+在线：https://dbbill3886.github.io/zhouxuan-mv-web/
 
-- 风格 B：奶油纸、墨蓝、唯一一根褪色红线、巨大的圆 / 落日、简笔小人、粗衬线中文排版。全部由代码绘制，无图片素材。
-- 时间轴完全由 `audio.currentTime`（平滑时钟）驱动，可任意拖动进度条。
-- 按 devicePixelRatio 渲染（上限 2x，帧时超预算时自动降分辨率）；横屏 16:9 舞台，竖屏为舞台 + 下方大字歌词。
-- 快捷键：空格 播放/暂停，←/→ 快退/快进 5 秒，F 全屏。
-- 调试参数：`?t=90` 定格在 90 秒；`?auto=1` 无音频虚拟时钟；`?fixq=1` 关闭自适应分辨率。
+- 主歌：预烘焙水彩底板/人物（p5.brush 离线生成，每张 2 个 boil 变体，5 fps 交替）+ 实时 10 fps 沸腾墨线（Canvas 2D）。
+- 副歌：同一套人物几何输出到两张密度层（雾蓝 / 珊瑚红），WebGL2 着色器实时做网点、套色偏移、缺墨与纸纹；副歌二为反转版（珊瑚红实地 + 镂空大字 + 雾蓝人物）。
+- 色彩弧：琥珀（胶片）→ 夜蓝（熄灯、间奏、主歌二）→ 雨灰（尾声）。珊瑚红只属于“她”。
+- 时间完全由 `audio.currentTime` 驱动，可任意拖动；横屏 1920×1080 与竖屏 1080×1920 各自独立构图。
+- 调试参数：`?t=秒` 跳到某时刻，`&still` 静帧，`&q=0.5` 固定画质，`&auto` 无声自动播放。
 
-结构：`js/lib.js`（调色板/缓动/画笔/小人，即风格模块，见 `STYLE.md`）· `js/engine.js`（转场 pan/iris/flood、桥接圆与红线、字幕）· `js/scenes_*.js`（分镜）· `js/timeline.js`（时间线）· `js/main.js`（循环、时钟、界面）。
-字体：Noto Serif CJK SC Bold 与 Playfair Display Italic（均为 SIL OFL）子集化后内嵌于 `fonts/fonts.css`（`build_fonts.py`）。
+结构：`js/core.js`（风格内核）`fig.js`（人物）`props.js`（道具）`post.js`（纸/Riso 着色器）
+`shots_*.js`（各段镜头与镜头间的桥接物）`timeline.js`（镜头表）`main.js`（时钟、布局、歌词、UI）。
+全部画面由代码生成，无 AI 生成图像。
