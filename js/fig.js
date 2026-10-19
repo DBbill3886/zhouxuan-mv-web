@@ -21,22 +21,38 @@ function figure(o) {
   const lc = o.lc || ZX.ink, w = s * (o.lw ?? .017), A = o.alpha ?? 1, k = o.who + (o.key || '');
   const H = P => P.map(p => mApply(mh, p)), B = P => P.map(p => mApply(mb, p));
   const sk = o.who === 'her' ? 'herSkin' : 'himSkin', hr = o.who === 'her' ? 'herHair' : 'himHair', bd = o.body || (o.who === 'her' ? 'herBody' : 'himBody');
+  // Figure language (pass 5, after Malika Favre's negative-space faces + Tatsuro Kiuchi's quiet flat figures):
+  // no black outline round the face — the profile is the edge of the skin wash; a crisp darker-skin shadow shape under the jaw
+  // and down the neck carries the form; hair is the big graphic shape with one cool sheen; clothes are flat, folds in a darker cloth tone.
+  const c = X.ctx, BCOL = { herBody: ZX.coral, himBody: '#3A3D4A', himBodyGray: '#5E646B', herBodyGray: '#B9675A' }[bd] || '#3A3D4A';
+  const SH = o.who === 'her' ? '#D9A988' : '#C99A7C', EDGE = '#9C6A50', cloth = mixCol(BCOL, ZX.ink, .55);
+  const inSkin = fn => { c.save(); pathOf(c, H(throughClosed(skinPoly(G), 4)), true); c.clip(); fn(); c.restore(); };
+  if (!o.noBody && o.full) legs(o, G, mb, BCOL, A);
   if (!o.lineOnly) drawSprite(sk, 'skin', mh, o.skinTint || o.tint, A);
+  if (!o.lineOnly) inSkin(() => {
+    c.globalAlpha *= A * .78; c.fillStyle = SH; pathOf(c, H(through(G.shade, 4)), true); c.fill();
+    const [cx, cy, cr] = G.cheek, q = mApply(mh, [cx, cy]); c.globalAlpha = A * (o.who === 'her' ? .22 : .12);
+    const gr = c.createRadialGradient(q[0], q[1], 0, q[0], q[1], cr * s); gr.addColorStop(0, ZX.coral); gr.addColorStop(1, 'rgba(240,120,100,0)'); c.fillStyle = gr; c.fillRect(q[0] - cr * s, q[1] - cr * s, cr * s * 2, cr * s * 2);
+  });
   if (!o.noBody) {
     if (!o.lineOnly) drawSprite(bd, 'body', mb, o.tint, A);
-    const BO = throughClosed(G.body, 4).filter(p => p[1] < 3.6);
-    ink(B(BO), w * .8, { col: lc, key: k + 'body', smooth: 0, taper: [.05, .05], alpha: A });
-    ink(B(G.seam), w * .5, { col: lc, key: k + 'seam', alpha: A });
-    if (G.lapel) ink(B(G.lapel), w * .55, { col: lc, key: k + 'lapel', alpha: A });
-    ink(B(G.collar), w * .65, { col: lc, key: k + 'collar', alpha: A });
+    if (G.shirt && !o.lineOnly) { c.save(); c.globalAlpha *= A * .92; c.fillStyle = '#EDE3CF'; pathOf(c, B(through(G.shirt, 3)), true); c.fill(); c.restore(); }
+    const BO = throughClosed(G.body, 4).filter(p => p[1] < 3.6), lcB = o.lineOnly ? lc : cloth;
+    ink(B(BO), w * .55, { col: lcB, key: k + 'body', smooth: 0, taper: [.05, .05], alpha: A * .8 });
+    ink(B(G.seam), w * .4, { col: lcB, key: k + 'seam', alpha: A * .7 });
+    if (G.lapel) ink(B(G.lapel), w * .45, { col: o.lineOnly ? lc : mixCol(BCOL, '#EDE3CF', .3), key: k + 'lapel', alpha: A * .8 });
+    ink(B(G.collar), w * .5, { col: lcB, key: k + 'collar', alpha: A * .8 });
   }
   if (!o.lineOnly) drawSprite(hr, 'hair', mh, o.hairTint, A);
-  // hair: a few lighter strands give it flow and sheen (live ink, low contrast)
-  if (G.strands && !o.lineOnly) G.strands.forEach((P, i) => ink(H(P), w * (.5 - i * .08), { col: mixCol(ZX.ink, '#8E9BB3', .55), key: k + 'str' + i, alpha: A * .55, taper: [.6, .7] }));
-  if (G.lips && !o.lineOnly) { const q = mApply(mh, [G.lips[0], G.lips[1]]), r = G.lips[2] * s, c = X.ctx; c.save(); pathOf(c, H(throughClosed(skinPoly(G), 4)), true); c.clip(); c.globalAlpha *= A * .45; c.fillStyle = ZX.coral; c.beginPath(); c.ellipse(q[0] - dir * r * .3, q[1], r * 1.1, r * .9, 0, 0, TAU); c.fill(); c.restore(); }
-  ink(H(G.face), w, { col: lc, key: k + 'face', alpha: A, smooth: 4 });
-  ink(H(G.neckBack), w * .8, { col: lc, key: k + 'nb', alpha: A });
-  if (G.ear) ink(H(G.ear), w * .55, { col: lc, key: k + 'ear', alpha: A });
+  if (G.sheen && !o.lineOnly) { c.save(); pathOf(c, H(throughClosed(G.hair, 4)), true); c.clip(); c.globalAlpha *= A * .38; c.fillStyle = '#8FA3C4'; pathOf(c, H(through(G.sheen, 4)), true); c.fill(); c.restore(); }
+  // the profile: a thin warm edge (forehead → chin only), never a black contour
+  const FE = G.face.filter(p => p[1] < .95);
+  ink(H(FE), w * (o.lineOnly ? 1 : .42), { col: o.lineOnly ? lc : EDGE, key: k + 'face', alpha: A * (o.lineOnly ? 1 : .55), smooth: 4, taper: [.3, .4] });
+  if (o.lineOnly) ink(H(G.neckBack), w * .8, { col: lc, key: k + 'nb', alpha: A });
+  if (G.ear) { if (!o.lineOnly) { c.save(); c.globalAlpha *= A * .7; c.fillStyle = SH; pathOf(c, H(through(G.ear, 4)), true); c.fill(); c.restore(); }
+    ink(H(G.ear.slice(1, 4)), w * .35, { col: EDGE, key: k + 'ear', alpha: A * .6 }); }
+  if (G.lipShape && !o.lineOnly) { c.save(); c.globalAlpha *= A * .9; c.fillStyle = '#D9574A'; pathOf(c, H(throughClosed(G.lipShape, 3)), true); c.fill(); c.restore(); }
+  if (G.mouth) ink(H(G.mouth), w * .5, { col: EDGE, key: k + "mouth", alpha: A * .9, taper: [.3, .6] });
   // eyes (open). blink 0 = open, 1 = shut; look shifts the iris along the lid
   const bl = clamp(o.blink || 0), U = G.eyeU, Lo = G.eyeL, a = U[0], b = U[U.length - 1];
   const lid = U.map((p, i) => { const q = i / (U.length - 1), base = [lerp(a[0], b[0], q), lerp(a[1], b[1], q) + .012]; return [lerp(p[0], base[0], bl), lerp(p[1], base[1], bl)]; });
@@ -65,4 +81,16 @@ function figFlat(c, o) {
     const [ix, iy, ir] = G.iris, P = mApply(m, [ix, iy]); c.fillStyle = o.irisFill || '#fff'; c.beginPath(); c.arc(P[0], P[1], ir * s * 1.05, 0, TAU); c.fill();
     c.strokeStyle = '#000'; c.lineWidth = max(2, s * .008); c.lineCap = 'round'; pathOf(c, T(through(G.brow, 4))); c.stroke(); c.restore();
   }
+}
+
+// full-figure shots: long flat legs below the body sprite (8-head proportion), feet small; coat/skirt hem as a flat shape
+function legs(o, G, mb, col, A) {
+  const c = X.ctx, B = P => P.map(p => mApply(mb, p)), her = o.who === 'her', dark = mixCol(col, ZX.ink, .55);
+  const L = her ? [[[-.12,3.55],[.22,3.55],[.20,5.4],[.16,7.0],[.24,7.18],[.04,7.18],[.02,5.4]], [[.26,3.55],[.62,3.55],[.52,5.4],[.50,7.0],[.60,7.18],[.38,7.18],[.36,5.4]]]
+                : [[[-.42,3.55],[.20,3.55],[.12,5.4],[.10,7.05],[.26,7.22],[-.08,7.22],[-.14,5.4]], [[.24,3.55],[.86,3.55],[.66,5.4],[.62,7.05],[.80,7.22],[.44,7.22],[.40,5.4]]];
+  const legC = her ? '#2E3140' : '#2B2D36';
+  c.save(); c.globalAlpha *= A * (o.legA ?? 1);
+  L.forEach(P => { c.fillStyle = legC; pathOf(c, B(P), true); c.fill(); });
+  if (her) { c.fillStyle = col; pathOf(c, B(through([[-.42,3.4],[.86,3.4],[.98,4.5],[-.50,4.5]], 2)), true); c.fill(); }   // short skirt hem continues the sweater
+  c.restore();
 }

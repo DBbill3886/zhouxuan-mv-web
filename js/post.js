@@ -22,7 +22,7 @@ const POST = (() => {
     o = vec4(vec3((1. - cloud - fib*.03 - tooth + .05)*vig), 1.); }`;
   const FS = `#version 300 es
   precision highp float; in vec2 uv; out vec4 o;
-  uniform sampler2D uScene, uA, uB, uPaper; uniform vec2 uRes; uniform float uSeed, uMix, uCell, uK, uWarp;
+  uniform sampler2D uScene, uA, uB, uPaper; uniform vec2 uRes; uniform float uTime, uSeed, uMix, uCell, uK, uWarp;
   uniform vec3 uPaperCol, uColA, uColB; uniform vec2 uMis; ${NOISE}
   float halftone(sampler2D t, vec2 px, float ang, float cell){
     float c = cos(ang), s = sin(ang); mat2 R = mat2(c, -s, s, c);
@@ -34,10 +34,10 @@ const POST = (() => {
   }
   void main(){
     vec2 px = vec2(uv.x, 1.-uv.y)*uRes, tuv = px/uRes;
-    float pt = texture(uPaper, tuv).r, grain = h21(floor(px) + uSeed) - .5;
+    float pt = texture(uPaper, tuv).r, grain = h21(floor(px) + 3.7) - .5;   // static grain (re-randomising it read as flicker)
     vec3 pc = vec3(0.), rc = vec3(0.);
     if (uMix < .999) {
-      vec2 w = vec2(vnoise(px/(38.*uK) + uSeed), vnoise(px/(38.*uK) - uSeed + 9.)) - .5;
+      vec2 w = vec2(vnoise(px/(38.*uK) + vec2(uTime*.35, 0.)), vnoise(px/(38.*uK) + vec2(9., -uTime*.35))) - .5;   // smooth, continuous micro-warp
       pc = texture(uScene, tuv + w*uWarp/uRes).rgb * pt + grain*.022;
     }
     if (uMix > .001) {
@@ -68,7 +68,7 @@ const POST = (() => {
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     for (const n of ['scene', 'A', 'B']) tex[n] = mkTex();
     paperTex = mkTex(); fbo = gl.createFramebuffer();
-    for (const n of ['uScene', 'uA', 'uB', 'uPaper', 'uRes', 'uSeed', 'uMix', 'uCell', 'uK', 'uWarp', 'uPaperCol', 'uColA', 'uColB', 'uMis']) U[n] = gl.getUniformLocation(prog, n);
+    for (const n of ['uScene', 'uA', 'uB', 'uPaper', 'uRes', 'uSeed', 'uTime', 'uMix', 'uCell', 'uK', 'uWarp', 'uPaperCol', 'uColA', 'uColB', 'uMis']) U[n] = gl.getUniformLocation(prog, n);
     ok = true; return true;
   }
   function resize(w, h, k) {
@@ -85,14 +85,14 @@ const POST = (() => {
     gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, paperTex);
     gl.viewport(0, 0, W, H); gl.useProgram(prog);
     gl.uniform1i(U.uScene, 0); gl.uniform1i(U.uA, 1); gl.uniform1i(U.uB, 2); gl.uniform1i(U.uPaper, 3);
-    gl.uniform2f(U.uRes, W, H); gl.uniform1f(U.uSeed, (o.boilN % 7) * 17.0); gl.uniform1f(U.uMix, o.mix);
+    gl.uniform2f(U.uRes, W, H); gl.uniform1f(U.uSeed, (o.boilN % 7) * 17.0); gl.uniform1f(U.uTime, o.time || 0); gl.uniform1f(U.uMix, o.mix);
     gl.uniform1f(U.uCell, o.cell); gl.uniform1f(U.uK, o.k); gl.uniform1f(U.uWarp, o.warp);
     gl.uniform3fv(U.uPaperCol, hex3(o.paper)); gl.uniform3fv(U.uColA, hex3(o.colA)); gl.uniform3fv(U.uColB, hex3(o.colB)); gl.uniform2f(U.uMis, o.mis[0], o.mis[1]);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
   // test helper: luminance grid of the last drawn frame (gx × gy cells), read straight from the drawing buffer
-  function lumaGrid(gx = 64, gy = 36) { const px = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px); const g = new Float32Array(gx * gy);
-    for (let j = 0; j < gy; j++) for (let i = 0; i < gx; i++) { const x = Math.floor((i + .5) * W / gx), y = Math.floor((j + .5) * H / gy), o = (y * W + x) * 4; g[j * gx + i] = (.2126 * px[o] + .7152 * px[o + 1] + .0722 * px[o + 2]) / 255; }
-    return g; }
+  function lumaGrid(gx = 64, gy = 36) { const px = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px); const g = new Float32Array(gx * gy), n = new Float32Array(gx * gy);
+    for (let y = 0; y < H; y += 2) { const j = Math.min(gy - 1, Math.floor(y * gy / H)); for (let x = 0; x < W; x += 2) { const i = Math.min(gx - 1, Math.floor(x * gx / W)), o = (y * W + x) * 4; g[j * gx + i] += (.2126 * px[o] + .7152 * px[o + 1] + .0722 * px[o + 2]) / 255; n[j * gx + i]++; } }
+    for (let i = 0; i < g.length; i++) g[i] /= n[i] || 1; return g; }   // cell AVERAGE (grain-free), from the drawing buffer
   return { init, resize, draw, lumaGrid, get ok() { return ok; } };
 })();

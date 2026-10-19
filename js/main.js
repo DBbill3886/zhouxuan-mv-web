@@ -24,7 +24,7 @@ function layout() {
   for (const c of [S, A, B]) if (c.width !== bw || c.height !== bh) { c.width = bw; c.height = bh; }
   if (outChanged) { out.width = ow; out.height = oh; }
   out.style.width = w + 'px'; out.style.height = h + 'px';
-  X.L = !portrait; X.LW = LW; X.LH = LH; X.k = k;
+  X.L = !portrait; X.LW = LW; X.LH = LH; X.k = k; X.safeB = 96 / k;   // keep-out above the control bar (CSS px → logical)
   X.VIS = { x0: -ox / k, y0: -oy / k, x1: (w - ox) / k, y1: (h - oy) / k };
   if (hasGL && (outChanged || !V.paperOk)) { POST.resize(ow, oh, k * dpr); V.paperOk = true; }
   document.body.classList.toggle('portrait', portrait);
@@ -54,7 +54,7 @@ function drawLyric(t) {
   c.font = `${size}px ${ZX.fCN}`; c.textBaseline = 'alphabetic';
   const maxW = (V0.x1 - V0.x0) - O(180, 150), maxChars = Math.max(6, Math.floor(maxW / (size + track)));
   const lines = splitLine(s, maxChars), lh = size * 1.6;
-  const x = L.x ?? (V0.x0 + O(96, 78)), yb = L.y ?? (V0.y1 - O(96, 250));
+  const x = L.x ?? (V0.x0 + O(96, 78)), yb = min(L.y ?? (V0.y1 - O(96, 250)), V0.y1 - (X.safeB || 0) - size * .3);
   const reveal = clamp((t - t0) / (rap ? .28 : .45));                      // characters print in
   const n = [...s].length; let shown = Math.ceil(reveal * n), idx = 0;
   lines.forEach((ln, li) => {
@@ -94,7 +94,7 @@ function render(t) {
   for (const c of [sc, ac, bc]) { c.setTransform(...base); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; }
   if (X.mix < .999) { drawLyric(t); infoBar(t, sc, X.dark ? ZX.cream : ZX.ink, X.dark ? .6 : .72); }
   if (X.mix > .001) infoBar(t, X.infoInk === 'B' ? bc : ac, '#fff', 1);
-  if (hasGL) POST.draw({ scene: S, A, B, mix: X.mix, cell: 8 * V.k * V.dpr, k: V.k * V.dpr, warp: 1.1 * V.k * V.dpr, boilN: X.bn, paper: X.paper, colA: X.colA, colB: X.colB, mis: X.mis });
+  if (hasGL) POST.draw({ scene: S, A, B, mix: X.mix, cell: 8 * V.k * V.dpr, k: V.k * V.dpr, warp: 1.1 * V.k * V.dpr, boilN: X.bn, time: t % 1000, paper: X.paper, colA: X.colA, colB: X.colB, mis: X.mis });
   else { fb2d.setTransform(1, 0, 0, 1, 0, 0); fb2d.drawImage(S, 0, 0, V.ow, V.oh); }
 }
 // ---------------- clock ----------------

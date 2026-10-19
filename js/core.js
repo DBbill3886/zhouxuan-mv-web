@@ -33,7 +33,9 @@ const CX = () => X.LW / 2, CY = () => X.LH / 2;
 // ---------- boil ----------
 let BKEY = 0;
 const boil = key => { BKEY = hstr(String(key)) * 1000; };
-const jit = (i, a) => (hash(BKEY + i * 13.37 + X.bn * 7.13) - .5) * 2 * a;
+// boil is continuous: the jitter glides between 10 fps keys (smoothstep), so lines tremble smoothly instead of stepping
+const bfr = () => { const f = X.t * BOIL - X.bn; return f * f * (3 - 2 * f); };
+const jit = (i, a) => { const q = BKEY + i * 13.37, h0 = hash(q + X.bn * 7.13), h1 = hash(q + (X.bn + 1) * 7.13); return ((h0 + (h1 - h0) * bfr()) - .5) * 2 * a; };
 
 // ---------- paths ----------
 function pathOf(c, P, close = false) { c.beginPath(); for (let i = 0; i < P.length; i++) i ? c.lineTo(P[i][0], P[i][1]) : c.moveTo(P[i][0], P[i][1]); if (close) c.closePath(); }
@@ -55,7 +57,7 @@ function ink(pts, w = 4, o = {}) {
   for (let i = 0; i < n; i++) {
     const a = P[max(0, i - 1)], b = P[min(n - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], d = hypot(dx, dy) || 1, u = i / (n - 1);
     let k = o.closed ? 1 : min(1, ta[0] > 0 ? .25 + .75 * u / ta[0] : 1, ta[1] > 0 ? .2 + .8 * (1 - u) / ta[1] : 1);
-    k *= .93 + .1 * hash(BKEY + i * .71 + X.bn);                      // pressure wobble (subtle: no width flicker)
+    k *= .93 + .1 * (hash(BKEY + i * .71 + X.bn) * (1 - bfr()) + hash(BKEY + i * .71 + X.bn + 1) * bfr());                      // pressure wobble (subtle: no width flicker)
     const hw = w * k / 2; L.push([P[i][0] - dy / d * hw, P[i][1] + dx / d * hw]); R.push([P[i][0] + dy / d * hw, P[i][1] - dx / d * hw]);
   }
   const ga = c.globalAlpha; c.fillStyle = o.col || ZX.ink; c.globalAlpha = ga * (o.alpha ?? 1);
@@ -73,9 +75,10 @@ function wash(P, col, o = {}) {
   if (TILE && o.tex !== 0) {
     if (!TILEPAT) TILEPAT = c.createPattern(TILE, 'repeat');
     c.globalCompositeOperation = 'multiply'; c.globalAlpha = ga * (o.alpha ?? 1) * (o.tex ?? .9); c.fillStyle = TILEPAT;
-    const s = o.ts ?? 1.2, ox = o.tx ?? hash(P.length + P[0][0]) * 500; c.save(); c.translate(ox, ox * .7); c.scale(s, s);
+    // granulation is anchored to the SHAPE (moves with it, never re-randomised per frame — that was a full-texture flicker on every moving wash)
+    const s = o.ts ?? 1.2, sd = hash(P.length * 1.37) * 500, ox = o.tx ?? (P[0][0] + sd), oy = o.ty ?? (P[0][1] + sd * .7); c.save(); c.translate(ox, oy); c.scale(s, s);
     let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of P) { x0 = min(x0, x); y0 = min(y0, y); x1 = max(x1, x); y1 = max(y1, y); }
-    c.fillRect((x0 - ox) / s - 2, (y0 - ox * .7) / s - 2, (x1 - x0) / s + 4, (y1 - y0) / s + 4); c.restore();
+    c.fillRect((x0 - ox) / s - 2, (y0 - oy) / s - 2, (x1 - x0) / s + 4, (y1 - y0) / s + 4); c.restore();
     c.globalCompositeOperation = 'source-over';
   }
   if (o.edge !== 0) { c.globalAlpha = ga * (o.alpha ?? 1) * (o.edge ?? .22); c.strokeStyle = o.edgeCol || mixCol(col, ZX.ink, .45); c.lineWidth = o.edgeW ?? 9; pathOf(c, P, true); c.stroke(); }

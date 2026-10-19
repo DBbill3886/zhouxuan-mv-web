@@ -28,10 +28,10 @@ function shotInterlude(t, lt, d) {
   if (orbit > 0) for (const w of ['her', 'him']) { for (let i = 1; i < 26; i++) { const a = th - i * .09, sg = w === 'her' ? 1 : -1, x = mx + cos(a) * rr * sg, y = my + sin(a) * rr * ry * sg;
     c.fillStyle = rgba(w === 'her' ? ZX.coral : ZX.mist, (1 - i / 26) * .8 * seg(orbit, 0, .05)); c.beginPath(); c.arc(x, y + O(120, 120), 4, 0, TAU); c.fill(); } }
   for (const w of ['her', 'him']) {
-    const s0 = B8[w][2], s = lerp(s0, O(170, 160), lift), fx = lerp(B8[w][0], P[w][0], lift), fy = lerp(B8[w][1], P[w][1] - s * .3, lift);
+    const s0 = B8[w][2], s = lerp(s0, O(92, 90), lift), fx = lerp(B8[w][0], P[w][0], lift), fy = lerp(B8[w][1], P[w][1] - O(250, 280), lift);   // full figures (8 heads) once they float free
     const other = w === 'her' ? P.him : P.her, face = lift < .5 ? (w === 'her' ? -1 : 1) : Math.sign(other[0] - P[w][0]) || 1;
     const dir = lift < .5 ? face : lerp(w === 'her' ? -1 : 1, face, seg(lift, .5, 1)) || face;
-    figure({ who: w, x: fx, y: fy, s, dir: sgnDir(dir), tilt: sin(t * .7 + (w === 'her' ? 0 : 2)) * .08, blink: blinkAt(t, w === 'her' ? [124.2, 131.0] : [127.5, 133.6]), alpha: 1 - seg(apart, .7, 1) });
+    figure({ who: w, x: fx, y: fy, s, dir: sgnDir(dir), tilt: sin(t * .7 + (w === 'her' ? 0 : 2)) * .08, blink: blinkAt(t, w === 'her' ? [124.2, 131.0] : [127.5, 133.6]), alpha: 1 - seg(apart, .7, 1), full: lift > .01, legA: seg(lift, 0, .4) });
   }
   // the spark: a coral point rises from the bottom and bursts at 2:18
   const sk = seg(t, 135.8, 138); if (sk > 0) { const x = CX() + sin(sk * 9) * 8, y = lerp(V0.y1 + 20, FW0()[1], easeOut(sk));

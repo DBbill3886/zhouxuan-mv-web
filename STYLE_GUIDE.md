@@ -47,3 +47,13 @@
 - Characters (pass 4): her — long neck, small upturned nose, soft coral lip tint, lashes on an almond open eye, long side-fringed hair falling behind the shoulder with light strands; slim sloping-shouldered sweater with a waist. Him — straight nose, defined jaw, swept quiff with strands, tailored coat with V collar + lapel. One geometry (geo.js) drives sprites, ink and Riso silhouettes.
 - No literal violence/props: 刺骨 is cold breath + frost crystals; 高音 is her light rising out of reach with his thread dissolving into coral rain.
 - Boil never hard-swaps baked variants (smooth ≤45 % crossfade); the visible canvas never resizes for quality.
+
+## Pass 5 — figure language (Favre negative-space × Kiuchi quiet flat figures)
+- No black contour round faces: the profile is the edge of the skin wash, plus at most a thin warm sienna edge (forehead→chin).
+- One crisp darker-skin shadow shape under the jaw and down the neck carries the form; soft coral cheek glow.
+- Hair is the main graphic shape (pointed locks, side part, tapered nape) with one cool mist-blue sheen; no strands.
+- Her: small solid coral lips; him: one short warm mouth line, shaded ear, cream shirt V under the dark coat.
+- Clothes are flat; outline/fold lines in a darker tone of the cloth, never ink-black.
+- Full figures (8 heads, `full:true`) wherever the whole body is on screen (interlude orbit); half-body elsewhere.
+- Textures never re-randomise per frame: wash granulation is anchored to the shape; boil is continuous; grain is static.
+- Lyrics / chorus captions are clamped above the control bar (`X.safeB`).

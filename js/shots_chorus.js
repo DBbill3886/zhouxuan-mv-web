@@ -18,6 +18,7 @@ function rFig(R, who, x, y, s, dir, o = {}) { const c = R.F; figFlat(c, { who, x
 function rRow(R, txt, x, base, w, h, a = 1) { const c = R.T; c.save(); c.globalAlpha = a; c.fillStyle = R.tc; fitWord(c, txt, x, base, w, h); c.restore(); }
 function rCN(R, lines, x, y, size, o = {}) {   // Chinese lines in bold Song, print-in by character
   const c = o.ctx || R.T; c.save(); c.fillStyle = o.col || R.tc; c.font = `${size}px ${ZX.fCNB}`; c.textBaseline = 'middle';
+  if (X.safeB) { const bot = y + (lines.length - 1) * size * 1.5 + size * .55, lim = X.VIS.y1 - X.safeB; if (bot > lim) y -= bot - lim; }   // never under the control bar
   let n = 0; const shown = o.k == null ? 1e9 : Math.ceil(o.k * lines.join('').length);
   lines.forEach((ln, i) => { const ch = [...ln]; let cx = o.align === 'right' ? x - spacedW(c, ln, size * .2) : o.align === 'center' ? x - spacedW(c, ln, size * .2) / 2 : x;
     for (const q of ch) { if (n++ < shown) c.fillText(q, cx, y + i * size * 1.5); cx += c.measureText(q).width + size * .2; } });
