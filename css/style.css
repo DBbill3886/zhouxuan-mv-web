@@ -8,8 +8,8 @@ body{font-family:ZXUI,system-ui,sans-serif;color:var(--ink)}
 #start::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;background-image:radial-gradient(rgba(60,45,25,.10) 1px,transparent 1.2px);background-size:5px 5px;mix-blend-mode:multiply}
 #start .title{position:relative}
 #start .kicker{font:600 12px/1 ZXUI,sans-serif;letter-spacing:.38em;opacity:.7;margin-bottom:22px}
-#start h1{font:400 clamp(96px,17vw,230px)/1 ZXSongB,serif;letter-spacing:.12em;margin:0 0 0 .12em;color:var(--ink);position:relative}
-#start h1::before{content:"周旋";position:absolute;left:0;top:0;color:var(--coral);mix-blend-mode:multiply;transform:translate(6px,-4px);opacity:.85;z-index:-1}
+#start h1{white-space:nowrap;font:400 clamp(96px,17vw,230px)/1 ZXSongB,serif;letter-spacing:.12em;margin:0 0 0 .12em;color:var(--ink);position:relative}
+#start h1::before{content:"周旋";position:absolute;left:0;right:0;top:0;text-align:inherit;white-space:nowrap;color:var(--coral);mix-blend-mode:multiply;transform:translate(-.03em,-3px);opacity:.85;z-index:-1}
 #start .by{font:400 18px/1 ZXSong,serif;letter-spacing:.4em;margin-top:26px;opacity:.8}
 #start .strip{width:min(78vw,900px);height:30px;border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);opacity:.55;margin:42px 0;
   background:repeating-linear-gradient(90deg,transparent 0 14px,rgba(38,40,51,.0) 14px 15px,transparent 15px 36px),
