@@ -79,7 +79,7 @@ function chorusDensity(t, lt, d, kind, inv) {
     const lines = ['多希望是你', '周旋着我妥协着'], k = seg(t, inv ? 204.9 : 88.14, (inv ? 204.9 : 88.14) + 1.2), k2 = inv ? seg(t, 208.86, 209.8) : 1;
     rCN(R, [lines[0]], x0, L ? midY - 38 : P_MID(), O(50, 46), { k }); if (k2 > 0) rCN(R, [lines[1]], x0, L ? midY + 38 : P_MID() + 70, O(50, 46), { k: inv ? k2 : k }); rMeta(R, t, tcLabel(t, tag));
   }
-  else if (kind === 'R3') {   // 言语刺骨 · 手冰冷 — spikes from her lips; he freezes into the other colour
+  else if (kind === 'R3') {   // 言语刺骨 · 手冰冷 — her words drift as cold breath and frost him; he freezes into the other colour
     const P = R1POS(), c = R.T;
     c.save(); c.fillStyle = R.tc; c.font = `${O(560, 600)}px ${ZX.fCNB}`; c.textBaseline = 'alphabetic'; c.textAlign = 'center';
     if (L) { c.fillText('刺', 480, 760); c.fillText('骨', 1440, 760); } else { c.font = `400px ${ZX.fCNB}`; c.fillText('刺', 540 - 210, V0.y0 + 560); c.fillText('骨', 540 + 210, V0.y0 + 560); } c.restore();
@@ -89,14 +89,19 @@ function chorusDensity(t, lt, d, kind, inv) {
     const yF = P.him[1] + P.him[2] * 3.3 - freeze * P.him[2] * 3.9;
     for (const [ctx, part] of [[R.F, 0], [inv ? X.B : X.A, 1]]) { ctx.save(); ctx.beginPath(); if (part === 0) ctx.rect(V0.x0, V0.y0 - 50, V0.x1 - V0.x0, yF - V0.y0 + 50); else ctx.rect(V0.x0, yF, V0.x1 - V0.x0, V0.y1 - yF + 50); ctx.clip();
       figFlat(ctx, { who: 'him', x: P.him[0], y: P.him[1], s: P.him[2], dir: -1, fill: inv && part ? '#000' : figGrad(ctx, P.him[1] - P.him[2] * .5, P.him[1] + P.him[2] * 3.2), irisFill: inv && part ? '#fff' : undefined }); ctx.restore(); }
-    // spikes: one per beat, flying from her lips to him
+    // her words as cold breath: fine drifting wisps (type colour) leave her lips and settle on him as frost crystals — nothing stabs
     const lip = [P.her[0] + P.her[2] * .36, P.her[1] + P.her[2] * .3], tgt = [P.him[0] - P.him[2] * .3, P.him[1] + P.him[2] * .25];
-    const b0 = beatOf(t - lt + .3);
-    for (let i = 0; i < 9; i++) { const ts = (Math.ceil(b0) + i) * BEAT + BOFF, age = t - ts; if (age < 0) continue;
-      const u = easeOut(clamp(age / .5)), hy = (hash(i * 3) - .5) * P.her[2] * .5, x = lerp(lip[0], tgt[0], u), y = lerp(lip[1], tgt[1] + hy, u), len = O(110, 90) * (1 - .3 * u), w = O(16, 14);
-      const p = R.P; p.save(); p.fillStyle = R.pc; p.beginPath(); p.moveTo(x + len * .5, y); p.lineTo(x - len * .5, y - w); p.lineTo(x - len * .5, y + w); p.closePath(); p.fill(); p.restore(); }
+    const q = R.T; q.save(); q.fillStyle = R.tc; q.strokeStyle = R.tc; q.lineCap = 'round';
+    for (let j = 0; j < 7; j++) for (let i = 0; i < 22; i++) { const u = ((i / 22 + lt * .14 + j * .11) % 1), born = seg(lt, j * .25, j * .25 + .6); if (born <= 0) continue;
+      const x = lerp(lip[0], tgt[0], u), y = lerp(lip[1], tgt[1], u) + sin(u * PI) * O(-95, -80) * (j - 3) * .55 + sin(u * 7 + lt * 1.2 + j * 1.7) * O(26, 22) * u;
+      q.globalAlpha = born * sin(PI * u) * .95; q.beginPath(); q.arc(x, y, O(5, 4.5) * (1 - u * .55), 0, TAU); q.fill(); }
+    const nF = floor(seg(lt, .6, d - .3) * 44);
+    for (let i = 0; i < nF; i++) { const fx = P.him[0] + (hash(i * 3.7) - .55) * P.him[2] * 1.1, fy = P.him[1] - P.him[2] * .1 + hash(i * 5.9) * P.him[2] * 1.9, r = O(12, 10) + hash(i * 1.3) * O(20, 16), rot = hash(i * 2.1) * PI;
+      const g = backOut(seg(lt, .6 + i * (d - .9) / 44, 1.1 + i * (d - .9) / 44)); q.globalAlpha = .95; q.lineWidth = O(3, 2.6);
+      for (let k = 0; k < 3; k++) { const a = rot + k * PI / 3, ca = cos(a) * r * g, sa = sin(a) * r * g; q.beginPath(); q.moveTo(fx - ca, fy - sa); q.lineTo(fx + ca, fy + sa); q.stroke(); } }
+    q.restore();
     // the last spike lengthens into a bar (bridge to R4)
-    const bar = easeIO(seg(lt, d - .55, d)); if (bar > 0) { const p = R.P, y = O(560, 760); p.save(); p.fillStyle = R.pc; p.fillRect(lerp(tgt[0] - 60, V0.x0 + M, bar), y - O(22, 20), lerp(120, rowW, bar), O(44, 40)); p.restore(); }
+    // (R3→R4: the print morph carries the frost into the struck-through 同情)
     rCN(R, midLines(t), x0, O(midY + 300, V0.y0 + 700), O(46, 44), { ctx: R.T, k: seg(t, t - lt + .1, t - lt + 1) });
   }
   else if (kind === 'R4') {   // 同情, struck through; a speech bubble from her lips holds it

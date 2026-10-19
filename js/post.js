@@ -38,14 +38,14 @@ const POST = (() => {
     vec3 pc = vec3(0.), rc = vec3(0.);
     if (uMix < .999) {
       vec2 w = vec2(vnoise(px/(38.*uK) + uSeed), vnoise(px/(38.*uK) - uSeed + 9.)) - .5;
-      pc = texture(uScene, tuv + w*uWarp/uRes).rgb * pt + grain*.03;
+      pc = texture(uScene, tuv + w*uWarp/uRes).rgb * pt + grain*.022;
     }
     if (uMix > .001) {
       vec2 pb = px + uMis*uK + vec2(-(px.y-uRes.y*.5)*.0016, (px.x-uRes.x*.5)*.0012);
       float ca = halftone(uA, px, .2618, uCell), cb = halftone(uB, pb, 1.309, uCell);
       float sa = .80 + .20*smoothstep(.25,.75, fbm(px/(160.*uK)+3.1)) - .14*step(.82, h21(floor(px/(1.5*uK))+7.));
       float sb = .82 + .18*smoothstep(.25,.75, fbm(px/(140.*uK)+9.7)) - .14*step(.84, h21(floor(px/(1.5*uK))+3.));
-      rc = uPaperCol * pt; rc *= mix(vec3(1.), uColA, ca*sa); rc *= mix(vec3(1.), uColB, cb*sb); rc += grain*.035;
+      rc = uPaperCol * pt; rc *= mix(vec3(1.), uColA, ca*sa); rc *= mix(vec3(1.), uColB, cb*sb); rc += grain*.025;
     }
     vec3 col = pc;
     if (uMix > .999) col = rc;
@@ -90,5 +90,9 @@ const POST = (() => {
     gl.uniform3fv(U.uPaperCol, hex3(o.paper)); gl.uniform3fv(U.uColA, hex3(o.colA)); gl.uniform3fv(U.uColB, hex3(o.colB)); gl.uniform2f(U.uMis, o.mis[0], o.mis[1]);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
-  return { init, resize, draw, get ok() { return ok; } };
+  // test helper: luminance grid of the last drawn frame (gx × gy cells), read straight from the drawing buffer
+  function lumaGrid(gx = 64, gy = 36) { const px = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px); const g = new Float32Array(gx * gy);
+    for (let j = 0; j < gy; j++) for (let i = 0; i < gx; i++) { const x = Math.floor((i + .5) * W / gx), y = Math.floor((j + .5) * H / gy), o = (y * W + x) * 4; g[j * gx + i] = (.2126 * px[o] + .7152 * px[o + 1] + .0722 * px[o + 2]) / 255; }
+    return g; }
+  return { init, resize, draw, lumaGrid, get ok() { return ok; } };
 })();

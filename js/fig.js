@@ -3,7 +3,7 @@
 'use strict';
 const TINT = {};
 function sprite(name, tint) {
-  const v = floor(X.t * 5) % 2, base = IMG[`spr_${name}_${v}`] || IMG[`spr_${name}_0`]; if (!base) return null;
+  const v = 0, base = IMG[`spr_${name}_0`]; if (!base) return null;   // paint holds still; the ink lines carry the boil (no 5 fps sprite swap)
   if (typeof tint === 'string') tint = { col: tint, a: .32 };
   if (!tint || !tint.a) return base;
   const key = `${name}${v}${tint.col}${tint.a}`; let cv = TINT[key];
@@ -31,6 +31,9 @@ function figure(o) {
     ink(B(G.collar), w * .65, { col: lc, key: k + 'collar', alpha: A });
   }
   if (!o.lineOnly) drawSprite(hr, 'hair', mh, o.hairTint, A);
+  // hair: a few lighter strands give it flow and sheen (live ink, low contrast)
+  if (G.strands && !o.lineOnly) G.strands.forEach((P, i) => ink(H(P), w * (.5 - i * .08), { col: mixCol(ZX.ink, '#8E9BB3', .55), key: k + 'str' + i, alpha: A * .55, taper: [.6, .7] }));
+  if (G.lips && !o.lineOnly) { const q = mApply(mh, [G.lips[0], G.lips[1]]), r = G.lips[2] * s, c = X.ctx; c.save(); pathOf(c, H(throughClosed(skinPoly(G), 4)), true); c.clip(); c.globalAlpha *= A * .45; c.fillStyle = ZX.coral; c.beginPath(); c.ellipse(q[0] - dir * r * .3, q[1], r * 1.1, r * .9, 0, 0, TAU); c.fill(); c.restore(); }
   ink(H(G.face), w, { col: lc, key: k + 'face', alpha: A, smooth: 4 });
   ink(H(G.neckBack), w * .8, { col: lc, key: k + 'nb', alpha: A });
   if (G.ear) ink(H(G.ear), w * .55, { col: lc, key: k + 'ear', alpha: A });
@@ -45,6 +48,7 @@ function figure(o) {
     ink(H(Lo), w * .42, { col: lc, key: k + 'eyeL', alpha: A * (1 - bl) * .9 });
   }
   ink(H(lid), w * .78, { col: lc, key: k + 'eyeU', alpha: A, taper: [.2, .35] });
+  if (G.lashes && bl < .5) G.lashes.forEach((P, i) => ink(H(P), w * .32, { col: lc, key: k + 'lash' + i, alpha: A * (1 - bl * 2), taper: [.1, .9], smooth: 0 }));
   return { mh, mb, pt: p => mApply(mh, p) };
 }
 // Riso silhouette into a density context (white = ink). Eye knocked out (paper) with the iris left in ink.

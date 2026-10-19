@@ -11,19 +11,28 @@ let hasGL = POST.init(out), fb2d = null;
 if (!hasGL) { fb2d = out.getContext('2d'); }
 // ---------------- layout ----------------
 let V = {}, quality = Q.has('q') ? +Q.get('q') : 1;
+// The visible WebGL canvas is sized ONLY by the window (never by adaptive quality): resizing a canvas clears it, which used to show
+// up as a black flash whenever the quality governor stepped. Quality scales the offscreen paint/density buffers instead; the post
+// pass samples them by UV, so a lower internal resolution just upsamples. Any resize is followed by an immediate re-render.
 function layout() {
   const w = innerWidth, h = innerHeight, portrait = h > w;
   const LW = portrait ? 1080 : 1920, LH = portrait ? 1920 : 1080, k = Math.max(w / LW, h / LH);
-  const dpr = Math.min(window.devicePixelRatio || 1, 2) * quality, ox = (w - LW * k) / 2, oy = (h - LH * k) / 2;
-  const bw = Math.round(w * dpr), bh = Math.round(h * dpr);
-  V = { w, h, portrait, LW, LH, k, dpr, ox, oy, bw, bh };
-  for (const c of [S, A, B, out]) if (c.width !== bw || c.height !== bh) { c.width = bw; c.height = bh; }
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), idpr = dpr * quality, ox = (w - LW * k) / 2, oy = (h - LH * k) / 2;
+  const ow = Math.round(w * dpr), oh = Math.round(h * dpr), bw = Math.round(w * idpr), bh = Math.round(h * idpr);
+  const outChanged = out.width !== ow || out.height !== oh;
+  V = { w, h, portrait, LW, LH, k, dpr, idpr, ox, oy, bw, bh, ow, oh };
+  for (const c of [S, A, B]) if (c.width !== bw || c.height !== bh) { c.width = bw; c.height = bh; }
+  if (outChanged) { out.width = ow; out.height = oh; }
   out.style.width = w + 'px'; out.style.height = h + 'px';
   X.L = !portrait; X.LW = LW; X.LH = LH; X.k = k;
   X.VIS = { x0: -ox / k, y0: -oy / k, x1: (w - ox) / k, y1: (h - oy) / k };
-  if (hasGL) POST.resize(bw, bh, k * dpr);
+  if (hasGL && (outChanged || !V.paperOk)) { POST.resize(ow, oh, k * dpr); V.paperOk = true; }
   document.body.classList.toggle('portrait', portrait);
 }
+// WebGL context loss (GPU reset, tab backgrounded on mobile): keep the page (paper background shows), rebuild on restore
+let glLost = false;
+out.addEventListener('webglcontextlost', e => { e.preventDefault(); glLost = true; }, false);
+out.addEventListener('webglcontextrestored', () => { try { hasGL = POST.init(out); V.paperOk = false; layout(); } catch (e) { hasGL = false; } glLost = false; }, false);
 // ---------------- lyrics & info ----------------
 const HL = { '胶片': ZX.amber, '一盏一盏': ZX.amberLt, '发烧': ZX.coral, '韭菜': ZX.mist, '泥潭': '#8A6A48', '一半一半': ZX.amberLt, '电话': ZX.amberLt, '泥泞': '#8A6A48',
   '眼睛': ZX.coral, '烟花': ZX.coral, '相濡以沫': ZX.amberLt, '泡影': ZX.amberLt, '暴风雨': ZX.amberLt, '一眼万年': ZX.amberLt, '雨总会落下': ZX.coral, '一滴一滴': ZX.coral, '高音': ZX.coral, '倒影': ZX.coral };
@@ -74,7 +83,8 @@ function infoBar(t, c, col, alpha) {
 // ---------------- render ----------------
 function render(t) {
   X.t = t; X.bn = Math.floor(t * BOIL);
-  const base = [V.k * V.dpr, 0, 0, V.k * V.dpr, V.ox * V.dpr, V.oy * V.dpr];
+  if (glLost) return;
+  const base = [V.k * V.idpr, 0, 0, V.k * V.idpr, V.ox * V.idpr, V.oy * V.idpr];
   for (const c of [sc, ac, bc]) { c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; }
   sc.fillStyle = ZX.paper; sc.fillRect(0, 0, V.bw, V.bh);
   ac.fillStyle = '#000'; ac.fillRect(0, 0, V.bw, V.bh); bc.fillStyle = '#000'; bc.fillRect(0, 0, V.bw, V.bh);
@@ -85,7 +95,7 @@ function render(t) {
   if (X.mix < .999) { drawLyric(t); infoBar(t, sc, X.dark ? ZX.cream : ZX.ink, X.dark ? .6 : .72); }
   if (X.mix > .001) infoBar(t, X.infoInk === 'B' ? bc : ac, '#fff', 1);
   if (hasGL) POST.draw({ scene: S, A, B, mix: X.mix, cell: 8 * V.k * V.dpr, k: V.k * V.dpr, warp: 1.1 * V.k * V.dpr, boilN: X.bn, paper: X.paper, colA: X.colA, colB: X.colB, mis: X.mis });
-  else { fb2d.setTransform(1, 0, 0, 1, 0, 0); fb2d.drawImage(S, 0, 0); }
+  else { fb2d.setTransform(1, 0, 0, 1, 0, 0); fb2d.drawImage(S, 0, 0, V.ow, V.oh); }
 }
 // ---------------- clock ----------------
 let dragT = null;
@@ -133,24 +143,30 @@ addEventListener('pointermove', poke); addEventListener('pointerdown', poke);
 out.addEventListener('click', () => { if (document.body.classList.contains('started')) { toggle(); } });
 addEventListener('keydown', e => { if (!document.body.classList.contains('started')) return;
   if (e.code === 'Space') { e.preventDefault(); toggle(); } else if (e.code === 'ArrowRight') seek(now() + 5); else if (e.code === 'ArrowLeft') seek(now() - 5); else if (e.key === 'f') $('fs').click(); });
-addEventListener('resize', layout);
+let lastT = 0; addEventListener('resize', () => { layout(); render(lastT); });
 // ---------------- loop + adaptive resolution ----------------
-let ema = 8, iema = 16.7, lastF = 0, lastQ = 0, frames = 0;
+// quality governor with hysteresis: step down only after ~2 s of sustained slow frames, step up only after ~10 s of headroom,
+// never more than one step per 4 s, and it never touches the visible canvas (see layout)
+let ema = 8, iema = 16.7, lastF = 0, lastQ = 0, frames = 0, slow = 0, fast = 0;
 function tick() {
   const t = now(), p0 = performance.now();
-  if (lastF && p0 - lastF < 250 && !document.hidden) iema = iema * .93 + (p0 - lastF) * .07; lastF = p0;
-  render(t);
+  if (lastF && p0 - lastF < 250 && !document.hidden) iema = iema * .95 + (p0 - lastF) * .05; lastF = p0;
+  render(t); lastT = t;
   const dt = performance.now() - p0; ema = ema * .95 + dt * .05;
   if ((frames++ & 3) === 0) { const f = t / DUR * 100; fill.style.width = f + '%'; knob.style.left = f + '%'; tcur.textContent = fmt(t); const ch = chapterAt(t); if (chap.textContent !== ch) chap.textContent = ch; }
   if (clk.playing && performance.now() - idle > 2800) document.body.classList.add('idle');
   const pn = performance.now();
-  if (!Q.has('q') && pn - lastQ > 1500) {
-    if ((ema > 12 || iema > 22) && quality > .5) { quality = Math.max(.5, quality * .85); iema = 16.7; layout(); lastQ = pn; }
-    else if (ema < 6 && iema < 17.6 && quality < 1 && pn - lastQ > 6000) { quality = Math.min(1, quality / .85); layout(); lastQ = pn; }
+  if (!Q.has('q') && !document.hidden) {
+    slow = (ema > 13 || iema > 24) ? slow + 1 : 0; fast = (ema < 6 && iema < 17.8) ? fast + 1 : 0;
+    if (pn - lastQ > 4000) {
+      if (slow > 120 && quality > .5) { quality = Math.max(.5, quality - .15); layout(); render(t); lastQ = pn; slow = 0; iema = 16.7; }
+      else if (fast > 600 && quality < 1) { quality = Math.min(1, quality + .15); layout(); render(t); lastQ = pn; fast = 0; }
+    }
   }
   if (!Q.has('still')) requestAnimationFrame(tick);
 }
 window.__render = t => render(t);
+window.__setQuality = q => { quality = q; layout(); render(lastT); };   // test hook: force a governor step
 window.__bench = (t0, t1, n) => { const o = []; for (let i = 0; i < n; i++) { const p = performance.now(); render(t0 + (t1 - t0) * i / n); o.push(performance.now() - p); } return o; };
 // ---------------- boot: fonts + assets ----------------
 layout();
@@ -161,6 +177,7 @@ for (const s of SP) for (const v of [0, 1]) jobs.push(loadImg(`spr_${s}_${v}`, `
 const fonts = Promise.all([document.fonts.load(`40px ${ZX.fCN}`, '周旋'), document.fonts.load(`40px ${ZX.fCNB}`, '周旋'), document.fonts.load(`40px ${ZX.fD}`, 'HEART'), document.fonts.load(`600 20px ${ZX.fUI}`, 'ZHOU')]).catch(() => {});
 let nDone = 0; jobs.forEach(j => j.then(() => { nDone++; const el = $('load'); if (el) el.textContent = `载入中 ${Math.round(nDone / jobs.length * 100)}%`; }));
 Promise.all([Promise.race([fonts, new Promise(r => setTimeout(r, 4000))]), Promise.all(jobs)]).then(() => {
+  render(qp('t') ?? 0);   // warm every code path once (first texture uploads, tint caches) before the overlay lifts
   document.body.classList.add('ready'); window.__ready = true;
   if (Q.has('t') || Q.has('auto')) { startEl.classList.add('gone'); document.body.classList.add('started'); if (Q.has('auto')) play(); }
   requestAnimationFrame(tick);

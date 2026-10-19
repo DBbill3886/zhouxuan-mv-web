@@ -85,21 +85,31 @@ function shotWords(t, lt, d) {
   X.lyr = X.L ? {} : { y: HOR() - 230 };   // portrait: lyric sits in the sky, clear of his coat
 }
 // ---------- the high note ----------
-const STAFF = () => X.L ? { x0: 300, x1: 1170, y: 470, gap: 26, nx: 1050, ny: 270 } : { x0: 300, x1: 950, y: 560, gap: 26, nx: 860, ny: 360 };
+// 你是我永远唱不上去的高音 — no notation: she becomes a small coral light on the far horizon and rises out of reach;
+// a coral thread from his lips climbs after her, goes taut, and its upper half dissolves into coral rain. He stays below.
+function hnLight(t, lt) { const P = OUT().her, x0 = P[0], y0 = HOR() - 3.25 * P[2] + P[2] * .5, u = easeIO(seg(lt, 1.0, 10.8));
+  return [lerp(x0, O(780, 470), u) + sin(lt * .7) * O(22, 16) * u, lerp(y0, X.VIS.y0 - 140, u * u * (3 - 2 * u) * .2 + u * .8)]; }
 function shotHighNote(t, lt, d) {
-  const c = X.ctx, S = STAFF(), V0 = X.VIS;
+  const c = X.ctx, V0 = X.VIS;
   lake(t, 1 - .5 * seg(lt, 0, 3)); rain(110, rgba('#4A5058', .6), 1, .14, 5);
-  const k = easeOut(seg(lt, 0, 1.2));
-  // the falling characters settle as the staff
-  for (let i = 0; i < 5; i++) ink([[S.x0 - i * 8, S.y + i * S.gap], [(S.x0 + S.x1) / 2, S.y + i * S.gap + 1], [S.x0 + (S.x1 - S.x0) * k, S.y + i * S.gap]], 1.6, { col: ZX.ink, key: 'sf' + i, taper: [0, .2] });
-  // ledger lines climbing towards the note he can't reach
-  for (let i = 1; i <= 6; i++) { const a = seg(lt, .8 + i * .12, 1.0 + i * .12); if (a > 0) ink([[S.nx - 40, S.y - i * S.gap], [S.nx + 40, S.y - i * S.gap]], 1.6, { key: 'lg' + i, alpha: a }); }
-  const na = backOut(seg(lt, 1.6, 2.2)); if (na > 0) { wash(ellP(S.nx, S.ny, 30 * na, 22 * na, 20, -.3), ZX.coral, { tex: .5 }); ink([[S.nx + 28, S.ny], [S.nx + 29, S.ny - 90], [S.nx + 28, S.ny - 160]], 3, { col: ZX.coral, key: 'stem', alpha: na }); }
-  // the leap: a dotted arc from the staff upward, every two beats; it stops short of the note
-  const ph = ((beatOf(t) / 2) % 1 + 1) % 1, reach = .82;
-  if (lt > 2.2) for (let i = 0; i < 16; i++) { const u = i / 16 * reach; if (u > ph * 1.1) break; const x = lerp(S.x0 + 140, S.nx - 10, u), y = lerp(S.y + S.gap * 2, S.ny, sin(u * PI / 2)); c.fillStyle = rgba(ZX.coral, .9 - u * .3); c.beginPath(); c.arc(x, y, 5, 0, TAU); c.fill(); }
+  // her far figure turns into a point of coral light
+  const fa = 1 - easeIO(seg(lt, 0, 1.4)); if (fa > 0) herFar(t, .4 * fa);
+  const [lx, ly] = hnLight(t, lt), la = easeOut(seg(lt, .3, 1.3)) * (1 - seg(lt, 10.4, 11.6));
+  glow(lx, ly, O(220, 200), '#FF8A5A', .55 * la); glow(lx, ly, O(46, 42), '#FFD2B0', .9 * la);
+  if (la > 0) wash(ellP(lx, ly, 9, 9, 14), ZX.coral, { tex: 0, edge: 0, alpha: la });
   // him: looking up, eyes open
-  himOut(t, { look: .9, tilt: -.2, blink: blinkAt(t, [266.2, 270.4]) });
+  const f = himOut(t, { look: .9, tilt: -.2, blink: blinkAt(t, [266.2, 270.4]) }), lip = f.pt([.80, .73]);
+  // the thread: climbs (draw-on), tightens as the light rises, then from the top down it lets go as drops of coral rain
+  const climb = easeOut(seg(lt, 1.0, 3.2)), taut = easeIO(seg(lt, 2.5, 6.0)), cut = 1 - .62 * easeIO(seg(lt, 6.2, 10.6));
+  const sag = O(170, 220) * (1 - taut * .85) + O(120, 160) * (1 - cut), N = 70;
+  const Q = []; for (let i = 0; i <= N; i++) { const u = i / N, x = lerp(lip[0], lx, u) + sin(u * PI * 2 + lt) * 6 * (1 - taut), y = lerp(lip[1], ly, u) + sin(u * PI) * sag; Q.push([x, y]); }
+  const keep = Q.slice(0, Math.max(2, Math.round(N * min(climb, cut)) + 1));
+  if (climb > 0) inkPart(keep, 1, O(3.4, 3.8), { col: ZX.coral, key: 'hnthr', taper: [0, .4] }); glow(keep[keep.length - 1][0], keep[keep.length - 1][1], 40, '#FF8A5A', .35 * climb);
+  // released drops: each point above the cut fell when the cut passed it
+  for (let i = Math.round(N * .38); i <= N; i++) { const u = i / N; if (u <= cut) continue;
+    const tRel = 6.2 + (10.6 - 6.2) * clamp((1 - u) / .62), age = lt - tRel; if (age < 0) continue;
+    const q = Q[i], y = q[1] + age * age * 900, a = (1 - seg(y, HOR() - 40, HOR() + 120)) * .9; if (a <= 0) { if (age < 3) ripple(q[0], HOR() + 90 + (i % 5) * 18, 20 + age * 40, max(0, .5 - age * .2), 'hr' + i); continue; }
+    wash(ellP(q[0], y, 5, 5 + min(16, age * 30), 10), ZX.coral, { tex: 0, edge: 0, alpha: a }); }
   // vertical lyric on the left
   const vk = seg(t, 263.3, 265); c.save(); c.fillStyle = ZX.ink; c.globalAlpha = .9 * (1 - seg(lt, d - .6, d)); c.font = `${O(36, 44)}px ${ZX.fCN}`;
   const txt = '你是我永远唱不上去的高音', n = Math.ceil([...txt].length * vk); vertical(c, [...txt].slice(0, n).join(''), V0.x0 + O(110, 90), O(250, 300), O(36, 44), 1.36);

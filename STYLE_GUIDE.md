@@ -44,3 +44,6 @@
 - The film is 15 continuous movements (see `MOVES` in `web/js/timeline.js`). Inside a movement nothing cuts: beats hand over by morphing one shared object, and painted movements carry one slow travelling camera (push + drift) that is identity at both ends.
 - Riso posters change by a print morph (old plate's dots shrink while the new plate's grow; figures stay registered).
 - No clip-art props: no price tags, coins, receipts, ECG traces, balloons, question marks, thermometers, cups, cartoon hands, scissors. Use the style's own materials instead: washes that drain or cool, reflections, threads, dots, rings, tally strokes, type.
+- Characters (pass 4): her — long neck, small upturned nose, soft coral lip tint, lashes on an almond open eye, long side-fringed hair falling behind the shoulder with light strands; slim sloping-shouldered sweater with a waist. Him — straight nose, defined jaw, swept quiff with strands, tailored coat with V collar + lapel. One geometry (geo.js) drives sprites, ink and Riso silhouettes.
+- No literal violence/props: 刺骨 is cold breath + frost crystals; 高音 is her light rising out of reach with his thread dissolving into coral rain.
+- Boil never hard-swaps baked variants (smooth ≤45 % crossfade); the visible canvas never resizes for quality.

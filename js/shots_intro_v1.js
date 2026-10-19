@@ -12,8 +12,8 @@ function withCam(cx, cy, z, fn, rot = 0) {
 function camAt(sx, sy, z, fn) { withCam(CX() - (sx - CX()) / z, CY() - (sy - CY()) / z, z, fn); }
 // plate drawn into an arbitrary rect (film frames)
 function plateRect(name, x, y, w, h, orient) {
-  const v = floor(X.t * 5) % 2, o = orient || (w >= h ? 'L' : 'P'), im = IMG[`plate_${name}_${o}_${v}`] || IMG[`plate_${name}_${o}_0`]; if (!im) return;
-  const s = max(w / im.width, h / im.height); X.ctx.drawImage(im, x + (w - im.width * s) / 2, y + (h - im.height * s) / 2, im.width * s, im.height * s);
+  const o = orient || (w >= h ? 'L' : 'P'), c = X.ctx;
+  drawBoiled(c, `plate_${name}_${o}`, (im, a) => { const s = max(w / im.width, h / im.height); c.save(); c.globalAlpha *= a; c.drawImage(im, x + (w - im.width * s) / 2, y + (h - im.height * s) / 2, im.width * s, im.height * s); c.restore(); });
 }
 // ---------- film geometry (separate L / P compositions) ----------
 const FILM = () => X.L ? { cx: 960, cy: 528, fw: 1320, fh: 704, pitch: 1440, vertical: false } : { cx: 540, cy: 900, fw: 860, fh: 1160, pitch: 1290, vertical: true };

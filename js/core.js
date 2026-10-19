@@ -47,7 +47,7 @@ function ink(pts, w = 4, o = {}) {
   if (!pts || pts.length < 2) return;
   const c = o.ctx || X.ctx, key = o.key ?? (pts[0][0] * 7 + pts[0][1] * 13 + pts.length);
   boil(key);
-  const amp = o.amp ?? (.6 + w * .18);
+  const amp = min(o.amp ?? (.5 + w * .07), 1.7);   // boil is a tremor, never a jump (thick strokes no longer jitter by 5–6 px)
   let P = pts.map((p, i) => [p[0] + jit(i * 2, amp), p[1] + jit(i * 2 + 1, amp)]);
   if (o.closed) { if (o.smooth !== 0) P = throughClosed(P, o.smooth ?? 5); } else if (o.smooth !== 0) P = through(P, o.smooth ?? 5);
   if (o.closed) P.push(P[0], P[1]);
@@ -55,7 +55,7 @@ function ink(pts, w = 4, o = {}) {
   for (let i = 0; i < n; i++) {
     const a = P[max(0, i - 1)], b = P[min(n - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], d = hypot(dx, dy) || 1, u = i / (n - 1);
     let k = o.closed ? 1 : min(1, ta[0] > 0 ? .25 + .75 * u / ta[0] : 1, ta[1] > 0 ? .2 + .8 * (1 - u) / ta[1] : 1);
-    k *= .82 + .3 * hash(BKEY + i * .71 + X.bn);                     // pressure wobble
+    k *= .93 + .1 * hash(BKEY + i * .71 + X.bn);                      // pressure wobble (subtle: no width flicker)
     const hw = w * k / 2; L.push([P[i][0] - dy / d * hw, P[i][1] + dx / d * hw]); R.push([P[i][0] + dy / d * hw, P[i][1] - dx / d * hw]);
   }
   const ga = c.globalAlpha; c.fillStyle = o.col || ZX.ink; c.globalAlpha = ga * (o.alpha ?? 1);
@@ -98,17 +98,24 @@ function fillAll(col, a = 1, c = X.ctx) { c.save(); c.globalAlpha *= a; c.fillSt
 
 // ---------- assets ----------
 const IMG = {};
-function loadImg(name, src) { return new Promise(res => { const i = new Image(); i.onload = () => { IMG[name] = i; res(i); }; i.onerror = () => res(null); i.src = src; }); }
+// images are fully decoded before start (no first-use decode stalls); a failed load retries once and never leaves a hole
+function loadImg(name, src, retry = 1) { return new Promise(res => { const i = new Image(); i.decoding = 'async';
+  i.onload = () => { const done = () => { IMG[name] = i; res(i); }; (i.decode ? i.decode() : Promise.resolve()).then(done, done); };
+  i.onerror = () => retry > 0 ? loadImg(name, src + (src.includes('?') ? '&' : '?') + 'r=1', 0).then(res) : res(null); i.src = src; }); }
+// watercolour boil without flicker: the two baked variants are never hard-swapped; v1 breathes in and out over v0 (smooth, ≤45 %)
+const boilW = () => .45 * (.5 - .5 * cos(X.t * TAU / 1.7));
+function drawBoiled(c, name, f) { const a = IMG[name + '_0'], b = IMG[name + '_1']; if (!a) return false; f(a, 1); const w = boilW(); if (b && w > .01) f(b, w); return true; }
 // plates: 2 boil variants, cross-switched at 5 fps, per orientation
 function plate(name, o = {}) {
-  const v = o.still ? 0 : floor(X.t * 5) % 2, im = IMG[`plate_${name}_${X.L ? 'L' : 'P'}_${v}`] || IMG[`plate_${name}_${X.L ? 'L' : 'P'}_0`];
+  const key = `plate_${name}_${X.L ? 'L' : 'P'}`, im = IMG[key + '_0'], im1 = o.still ? null : IMG[key + '_1'];
   const c = X.ctx; if (!im) { fillAll(ZX.paper); return; }
   c.save(); c.globalAlpha *= o.alpha ?? 1;
   let z = o.zoom ?? 1, ox = o.x ?? 0, oy = o.y ?? 0; const W = X.LW, H = X.LH, V0 = X.VIS;
   // under a zoomed-out camera the frame is smaller than the view: cover the view instead
   if (V0.x0 < -W * .02 || V0.y0 < -H * .02 || V0.x1 > W * 1.02 || V0.y1 > H * 1.02) { const zz = max((V0.x1 - V0.x0) / W, (V0.y1 - V0.y0) / H) * 1.02; if (zz * 1 > z) z = zz; ox += (V0.x0 + V0.x1) / 2 - W / 2; oy += (V0.y0 + V0.y1) / 2 - H / 2; }
   // bleed so the cover crop never shows an edge
-  const b = .04; c.drawImage(im, ox + W / 2 - W * (1 + b) * z / 2, oy + H / 2 - H * (1 + b) * z / 2, W * (1 + b) * z, H * (1 + b) * z); c.restore();
+  const b = .04, R = [ox + W / 2 - W * (1 + b) * z / 2, oy + H / 2 - H * (1 + b) * z / 2, W * (1 + b) * z, H * (1 + b) * z];
+  c.drawImage(im, ...R); const w = boilW(); if (im1 && w > .01) { c.globalAlpha *= w; c.drawImage(im1, ...R); } c.restore();
 }
 
 // ---------- type ----------
