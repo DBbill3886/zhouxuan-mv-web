@@ -39,3 +39,8 @@
 
 ## 禁止
 - 火柴人、圆脸大眼可爱风、细节堆砌的绘本风；纯黑/纯白；渐变发光泛滥；平涂无纹理的 canvas 形状；AI 生成图片。
+
+## Continuity & motifs (pass 3)
+- The film is 15 continuous movements (see `MOVES` in `web/js/timeline.js`). Inside a movement nothing cuts: beats hand over by morphing one shared object, and painted movements carry one slow travelling camera (push + drift) that is identity at both ends.
+- Riso posters change by a print morph (old plate's dots shrink while the new plate's grow; figures stay registered).
+- No clip-art props: no price tags, coins, receipts, ECG traces, balloons, question marks, thermometers, cups, cartoon hands, scissors. Use the style's own materials instead: washes that drain or cool, reflections, threads, dots, rings, tally strokes, type.

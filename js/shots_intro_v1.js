@@ -36,7 +36,10 @@ function cFever(w, h, t) {
   const f = figure({ who: 'him', x: hx, y: hy, s, dir: 1, tilt: -.06 + .02 * sin(t * 2), brow: .6, blink: blinkAt(t, [27.1]) });
   const heat = kf(lt, [[0, .25], [1.6, .95], [2.6, .95], [3.6, .45]]);
   const ch = f.pt([.62, .66]); glow(ch[0], ch[1], s * .22, '#FF6A4A', .18 + heat * .25);
-  thermometer(L ? w * .78 : w * .84, L ? h * .84 : h * .9, L ? h * .64 : h * .5, heat, L ? 1.25 : 1.1);
+  // 消炎: a cool mist wash breathes in from the far corner and calms the heat (no thermometer)
+  const cool = easeIO(seg(lt, 1.9, 3.7));
+  if (cool > 0) for (let l = 0; l < 3; l++) { const R = max(w, h) * (.2 + (.55 + l * .25) * cool), P = []; for (let i = 0; i < 40; i++) { const a = i / 40 * TAU; P.push([w * 1.02 + cos(a) * R * (1 + .07 * sin(a * 5 + t * .7 + l)), -h * .05 + sin(a) * R * (1 + .09 * sin(a * 3 + l * 2))]); }
+    wash(P, ZX.mist, { alpha: .13 * cool, tex: .9, edge: .12, edgeW: 10 }); }
   // heat shimmer above the head
   for (let i = 0; i < 3; i++) { const x0 = hx - s * .2 + i * s * .25, y0 = hy - s * .62, P = []; for (let k = 0; k < 7; k++) P.push([x0 + sin(k * 1.4 + t * 6 + i) * 10, y0 - k * s * .05]); ink(P, 2.4, { col: ZX.coral, key: 'hs' + i, alpha: heat * .9 }); }
 }
@@ -44,9 +47,11 @@ function cTag(w, h, t) {
   plateRect('amberPlain', 0, 0, w, h); const c = X.ctx; c.fillStyle = rgba('#7A4A20', .18); c.fillRect(0, 0, w, h);
   const lt = t - T_F[2], L = X.L, s = L ? h * .46 : w * .5, hx = L ? w * .42 : w * .45, hy = L ? h * .45 : h * .38, bow = kf(lt, [[0, .05], [1.5, .32]]);
   const f = figure({ who: 'him', x: hx, y: hy, s, dir: 1, tilt: bow, bodyTilt: bow * .15, blink: .55, brow: -.3 });
-  const anc = mApply(f.mb, [.42, 1.30]), sw = sin(t * 2.4) * .25 * exp(-lt * .35), len = s * .62, tx = anc[0] + sin(sw) * len, ty = anc[1] + cos(sw) * len;
-  ink([anc, [lerp(anc[0], tx, .5) + 6, lerp(anc[1], ty, .5)], [tx, ty]], 1.6, { key: 'tagstr' });
-  priceTag(tx + 10, ty - 6, sw + PI / 2 - .3, '¥0.00', L ? 1.15 : 1.25);
+  // 青春不值一提: the frame's colour drains out of him like an over-washed sheet; amber flecks drift off his shoulders
+  const bl = easeIO(seg(lt, .5, 3.7)), c2 = X.ctx;
+  for (let i = 0; i < 16; i++) { const u = ((lt * .22 + hash(i * 5.3)) % 1), sx = hx + (hash(i) - .5) * s * .9, x = sx + sin(u * 6 + i) * s * .08 + u * s * .25, y = hy + s * .9 + u * h * .5;
+    c2.fillStyle = rgba(i % 3 ? '#C8833A' : ZX.coral, .7 * sin(PI * u) * (.3 + bl)); c2.beginPath(); c2.ellipse(x, y, 5 + hash(i * 2) * 6, 3 + hash(i * 7) * 3, u * 4, 0, TAU); c2.fill(); }
+  wash(rectP(-4, -4, w + 8, h + 8), ZX.paper, { alpha: .5 * bl, tex: .9, edge: 0 });
 }
 // ---------- the page: ledger → chives → answer sheet → ink blot ----------
 const T_PG = { ledger: 33.63, chive: 37.50, snip: 39.36, turn: 41.0, answer: 41.43, blot: 44.45, mud: 45.27 };
@@ -133,7 +138,7 @@ function shotFilm(t, lt) {
   X.noInfo = t < 14;
 }
 // ---------- mud ----------
-function shotMud(t, lt, d) {
+function shotMud(t, lt, d, merged) {
   const L = X.L, c = X.ctx;
   plate('mud');
   const sink = ease(seg(lt, .3, d)), hx = O(1000, 560), hy = O(440, 860) + sink * O(170, 240), s = O(330, 380);
@@ -145,10 +150,24 @@ function shotMud(t, lt, d) {
   ink(P.slice(0, 26), 2.4, { col: '#2E2219', key: 'surf' });
   for (let j = 0; j < 3; j++) { const r = (((t * .5 + j / 3) % 1)) * s * 1.6 + s * .5, a = 1 - ((t * .5 + j / 3) % 1); const E = ellP(hx, surf + 4, r, r * .12, 36); ink(E.slice(0, 19), 1.8, { col: '#2E2219', key: 'mr' + j, alpha: a }); }
   // the flood we came from recedes; at the end the mud rises and flattens
-  const recede = 1 - easeOut(seg(lt, 0, .9)), rise = easeIn(seg(lt, d - .55, d));
+  const recede = 1 - easeOut(seg(lt, 0, .9)), rise = merged ? 0 : easeIn(seg(lt, d - .55, d));
   if (recede > 0) fillAll('#4E3B2A', recede);
   if (rise > 0) { const y = lerp(X.VIS.y1, X.VIS.y0 - 40, rise); wash([[X.VIS.x0 - 50, y], [X.VIS.x1 + 50, y + 10], [X.VIS.x1 + 50, X.VIS.y1 + 50], [X.VIS.x0 - 50, X.VIS.y1 + 50]], '#4E3B2A', { tex: .7, edge: .3 }); }
   X.lyr = { col: ZX.cream };
+}
+// ---------- one continuous shot: the camera sinks with him through the mud and comes to rest on the board below ----------
+const T_MC = { pan0: 48.35, pan1: 49.95, chess: 49.17 };
+function shotMudChess(t, lt) {
+  const c = X.ctx, V0 = X.VIS, Hs = V0.y1 - V0.y0, k = easeIO(seg(t, T_MC.pan0, T_MC.pan1));
+  const panel = (dy, fn) => { c.save(); c.translate(0, dy); c.beginPath(); c.rect(V0.x0 - 30, V0.y0 - 2, V0.x1 - V0.x0 + 60, Hs + 4); c.clip(); fn(); c.restore(); };
+  if (k < 1) panel(-k * Hs, () => shotMud(t, t - 45.27, T_MC.chess - 45.27, true));
+  if (k > 0) panel((1 - k) * Hs, () => shotChess(t, t - T_MC.chess, 56.55 - T_MC.chess));
+  if (k > 0 && k < 1) { // the seam is mud itself: a wet, ragged band the camera travels through
+    c.save(); c.translate(0, -k * Hs); const y = V0.y1, P = [];
+    for (let i = 0; i <= 24; i++) { const x = lerp(V0.x0 - 60, V0.x1 + 60, i / 24); P.push([x, y - Hs * .08 + sin(i * 1.3 + t) * 18]); }
+    for (let i = 24; i >= 0; i--) { const x = lerp(V0.x0 - 60, V0.x1 + 60, i / 24); P.push([x, y + Hs * .32 + sin(i * .9 - t) * 26]); }
+    wash(P, '#4E3B2A', { tex: .85, edge: .3, edgeW: 18 }); c.restore(); }
+  X.lyr = t < 49.75 ? { col: ZX.cream } : {};
 }
 // ---------- chessboard ----------
 function shotChess(t, lt, d) {

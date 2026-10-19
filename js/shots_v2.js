@@ -80,17 +80,16 @@ function shotPaths(t, lt, d) {
     c.save(); c.globalAlpha = (1 - st) * .85; c.fillStyle = ZX.cream; c.font = `600 ${O(22, 30)}px ${ZX.fUI}`; spaced(c, `Δ ${a.toFixed(1)}°`, ox, oy - r - 22, 3, 'center'); c.restore(); }
   nightLyr();
 }
-// ---------- pour: the coral road stands up as a stream from a tipped cup ----------
+// ---------- pour: the coral road stands up and runs down out of the sky as a stream (no cup) ----------
 const CUP = () => X.L ? [960, 230] : [540, 420];
 function cupShape(x, y, rot, s) { const P = rotP(offP([[-90, -110], [90, -110], [70, 110], [-70, 110]], x, y, s), x, y, rot); shape(P, ZX.cream, { lc: ZX.inkNight, key: 'cup', lw: 3 }); return rotP([[x + 90 * s, y - 110 * s]], x, y, rot)[0]; }
 function shotPour(t, lt, d) {
   plate('night'); fillAll(ZX.inkNight, .2 * (1 - seg(lt, 0, 1))); const c = X.ctx, V0 = X.VIS, [cx, cy] = CUP();
-  const tip = kf(lt, [[0, 0], [.6, 1.9], [d - 1, 2.1], [d - .3, .3]]), empty = seg(lt, d * .55, d * .85), cin = easeOut(seg(lt, 0, .6));
-  const lip = cupShape(cx - 60 + (1 - cin) * 0, cy - (1 - cin) * 400, tip, O(1, 1.15));
+  const empty = seg(lt, d * .55, d * .85), lip = [CX() - 34, V0.y0 - 80];
   // stream: full → thinning → drops (我不强求)
   const sw = lerp(26, 4, empty), bot = V0.y1 + 20;
   if (lt < .6) ink(pathPts(-1, 0, 1), 5, { col: ZX.coral, key: 'ph', taper: [0, 0], alpha: 1 - lt / .6 });
-  if (empty < 1) { const P = [[lip[0], lip[1]], [lip[0] + 26, lip[1] + 60]]; for (let i = 1; i <= 8; i++) P.push([lip[0] + 34 + sin(t * 8 + i) * 3, lerp(lip[1] + 60, bot, i / 8)]); ink(P, sw, { col: ZX.coral, key: 'stream', taper: [.1, 0] }); }
+  if (empty < 1) { const top = lip[1] + empty * 0, P = [[lip[0] + 34, top], [lip[0] + 34, lip[1] + 60]]; for (let i = 1; i <= 8; i++) P.push([lip[0] + 34 + sin(t * 8 + i) * 3, lerp(lip[1] + 60, bot, i / 8)]); ink(P, sw, { col: ZX.coral, key: 'stream', taper: [.1, 0] }); }
   // splash at the bottom: drops leap and fall back
   for (let i = 0; i < 14; i++) { const ph = (t * 1.6 + hash(i)) % 1, x = lip[0] + 34 + (hash(i * 3) - .5) * 260 * ph, y = bot - 40 - sin(ph * PI) * (120 + 160 * hash(i * 5)); c.fillStyle = rgba(ZX.coral, (1 - ph) * (1 - empty * .8)); c.beginPath(); c.arc(x, y, 7 * (1 - ph) + 2, 0, TAU); c.fill(); }
   // single drops when it is empty → the last drop (→ palm)
@@ -122,18 +121,21 @@ function shotFish(t, lt, d) {
   const knock = 156.8, shake = (t > knock && t < knock + .5) ? sin((t - knock) * 60) * 14 * (1 - (t - knock) / .5) : 0;
   c.save(); c.translate(shake, 0);
   const bowl = ellP(bx, by, br, br * .96, 48);
-  wash(bowl, '#3D5778', { tex: .7, alpha: .85 }); wash(ellP(bx, by - br * .25, br * .97, br * .2, 30).slice(0, 25).concat([[bx + br, by + br], [bx - br, by + br]]), '#5C7FA8', { tex: .8, alpha: .5 });
+  const cool = easeIO(seg(lt, .6, 3.6)), near = easeIO(seg(t, 154.2, 155.4));
+  wash(bowl, mixCol('#8A6A4E', '#3D5778', cool), { tex: .7, alpha: .85 }); wash(ellP(bx, by - br * .25, br * .97, br * .2, 30).slice(0, 25).concat([[bx + br, by + br], [bx - br, by + br]]), '#5C7FA8', { tex: .8, alpha: .5 });
   // the drop lands (ripple at the top surface)
   const rp = seg(lt, .2, 1.4); if (rp > 0 && rp < 1) ripple(bx, by - br * .25, 40 + rp * 160, 1 - rp, 'bwr');
   // two fish, circling each other (her coral, him mist)
-  const sp = t * 1.6, rr = br * .45;
+  // 手心残余温柔: the warm drop blooms into the water as a coral cloud and slowly goes cold
+  if (lt > .3) { const u = seg(lt, .3, 3.6); c.save(); c.beginPath(); c.ellipse(bx, by, br * .98, br * .94, 0, 0, TAU); c.clip(); wash(ellP(bx + sin(t) * 10, by - br * .25 + u * br * .5, br * (.15 + u * .5), br * (.12 + u * .35), 24), ZX.coral, { tex: .9, edge: .1, alpha: .55 * (1 - u) }); glow(bx, by, br * 1.1, '#FFB45E', .35 * (1 - cool)); c.restore(); }
+  const sp = t * 1.6, rr = br * lerp(.62, .32, near);
   fish(bx + cos(sp) * rr, by + sin(sp) * rr * .5, sp + PI / 2, O(1.0, 1.1), ZX.coral, 'fa');
   fish(bx + cos(sp + PI) * rr, by + sin(sp + PI) * rr * .5, sp + PI * 1.5, O(1.0, 1.1), ZX.mist, 'fb');
   ink(bowl, 3.4, { col: ZX.cream, closed: true, key: 'bowl' }); bowlCrack(easeOut(seg(t, knock, knock + .35)), bx, by, br);
   glow(bx - br * .4, by - br * .45, 60, '#FFFFFF', .25);
   c.restore();
   // the drop arriving from the palm
-  const fall = seg(lt, 0, .3); if (fall < 1) { const [hx, hy] = PALM(); wash(ellP(lerp(hx + O(500, 320), bx, fall), lerp(hy - 50 + O(160, 220), by - br * .25, fall), 14, 18, 12), '#9AA8BC', { tex: .4 }); }
+  const fall = seg(lt, 0, .35); if (fall < 1) wash(ellP(lerp(CX(), bx, ease(fall)), lerp(X.VIS.y0 - 30, by - br * .25, easeIn(fall)), 11, 17, 12), ZX.coral, { tex: .4 });
   nightLyr();
 }
 // ---------- dream: the cracked bowl is the bubble over his sleeping head ----------
@@ -151,7 +153,7 @@ function shotDream(t, lt, d) {
   if (m < 1) { const sp = t * 1.6, rr = br * .45; c.globalAlpha = 1 - m; fish(bx + cos(sp) * rr, by + sin(sp) * rr * .5 - up, sp + PI / 2, 1, ZX.coral, 'fa'); fish(bx + cos(sp + PI) * rr, by + sin(sp + PI) * rr * .5 - up, sp + PI * 1.5, 1, ZX.mist, 'fb'); c.globalAlpha = 1; }
   c.restore();
   ink(ellP(bx, by - up, br, br * .96, 48), 3.4, { col: ZX.cream, closed: true, key: 'bowl' }); c.save(); c.translate(0, -up); bowlCrack(1, bx, by, br); c.restore();
-  nightLyr();
+  nightLyr(); if (!X.L) X.lyr.y = X.VIS.y0 + 430;
 }
 // ---------- strings: fate's puppet; a heart line that wants to move ----------
 const STR = () => X.L ? { x: 960, y: 330, s: 300, bar: 70 } : { x: 540, y: 760, s: 320, bar: 230 };
@@ -207,7 +209,7 @@ function shotShadows(t, lt, d) {
   plate('night'); const c = X.ctx, V0 = X.VIS, [sx, sy, ss] = SEAL(), [dx, dy, dw, dh] = DOOR(), ex = easeIO(seg(lt, 0, 1.1));
   // the doorway's light opens up into the whole wall the shadows fall on
   const wl = [lerp(dx, V0.x0 - 40, ex), lerp(dy, V0.y0 - 40, ex), lerp(dw, V0.x1 - V0.x0 + 80, ex), lerp(dh, V0.y1 - V0.y0 + 80, ex)];
-  c.save(); c.globalAlpha = lerp(1, .55, ex); wash(rectP(...wl), '#E8C08A', { tex: .7, edge: .2 }); c.restore(); glow(sx, sy, O(900, 800), '#FFC27A', .3);
+  c.save(); c.globalAlpha = lerp(1, .55, ex); wash(rectP(...wl), mixCol('#F6E2B4', '#E8C08A', ex), { tex: .7 * ex, edge: .2 }); c.restore(); if (ex < 1) room(t, 1 - ex); glow(sx, sy, O(900, 800), '#FFC27A', .3 * ex);
   // first moments: the doorway shadow slides onto this wall
   if (ex < 1) { c.save(); c.globalAlpha = 1 - ex; const chX = O(760, 360), chY = DOOR()[1] + DOOR()[3] + O(10, 60); lightCone(chX, V0.y0 - 20, 90, O(620, 520), chY - V0.y0 + 300, '#FFC27A', .55); chair(chX, chY - 20 * O(1.2, 1.1), O(1.2, 1.1), '#3A4258', ZX.cream); c.restore(); }
   const meet = kf(lt, [[0, 1], [1.6, 0], [2.6, 0], [d, 1.1]], easeIO), S = O(300, 300);
@@ -282,19 +284,19 @@ function shotStarEye(t, lt, d) {
   const stop = seg(t, 189.8, 190.4), close = easeIn(seg(lt, d - .7, d));
   // star trails around the eye (long exposure); they stop on 只是我以为
   const sp = (t - 187.38) * .35 * (1 - stop * .9);
-  const fl = 1 - easeOut(seg(lt, 0, .7)); if (fl > 0) fillAll('#141B2A', .85 * fl);
-  starTrails(ex, ey, sp, 1 - stop * .7);
+  const fl = 1 - easeOut(seg(lt, 0, 1.2)); if (fl > 0) fillAll('#141B2A', .85 * fl);
+  starTrails(ex, ey, sp, (1 - stop * .7) * easeIO(seg(lt, .1, 1.4)));
   if (false) for (let i = 0; i < 40; i++) { const rr = O(300, 300) + hash(i * 3.3) * O(900, 700), a0 = hash(i * 7.1) * TAU, len = .2 + sp * .5; const arc = []; for (let k = 0; k <= 10; k++) { const q = a0 + k / 10 * len; arc.push([ex + cos(q) * rr, ey + sin(q) * rr]); } ink(arc, 1.6 + hash(i) * 1.6, { col: ZX.cream, key: 'trl' + i, alpha: .55 * (1 - stop * .7) }); }
   // her eye, very close: lid curve + iris (the moon)
   const s = EYE_S(), [ix, iy, ir] = G.iris, m = figMatrix(0, 0, s, 1, 0), I = mApply(m, [ix, iy]), ox = ex - I[0], oy = ey - I[1];
   const T = P => P.map(p => { const q = mApply(m, p); return [q[0] + ox, q[1] + oy]; });
-  const eyeIn = easeOut(seg(lt, 0, .6));
+  const eyeIn = easeIO(seg(lt, .1, 1.3));
   const lidU = G.eyeU.map((p, i) => { const q = i / (G.eyeU.length - 1), a = G.eyeU[0], b = G.eyeU[G.eyeU.length - 1], base = [lerp(a[0], b[0], q), lerp(a[1], b[1], q) + .012]; return [lerp(p[0], base[0], close), lerp(p[1], base[1], close)]; });
   c.save(); c.globalAlpha = eyeIn; wash(T([...through(lidU, 4), ...through(G.eyeL, 4).reverse()]), '#F4EEE0', { tex: .3, edge: 0 }); c.restore();
-  if (close < .9) { c.save(); c.beginPath(); pathOf(c, T([...through(lidU, 4), ...through(G.eyeL, 4).reverse()]), true); c.clip(); moon(ex, ey, ir * s * 1.05, 1, 1); wash(ellP(ex, ey, ir * s * .55, ir * s * .55, 28), ZX.ink, { tex: .5 });
+  if (close < .9) { c.save(); c.globalAlpha *= max(eyeIn, lt < 1 ? 0 : 1); c.beginPath(); pathOf(c, T([...through(lidU, 4), ...through(G.eyeL, 4).reverse()]), true); c.clip(); moon(ex, ey, ir * s * 1.05, 1, 1); wash(ellP(ex, ey, ir * s * .55, ir * s * .55, 28), ZX.ink, { tex: .5 });
     for (let i = 0; i < 10; i++) { const rr = ir * s * (.62 + i * .04), arc = []; for (let k = 0; k <= 8; k++) { const q = i + k / 8 * (.5 + sp * .4); arc.push([ex + cos(q) * rr, ey + sin(q) * rr]); } ink(arc, 1.4, { col: ZX.cream, key: 'itr' + i, alpha: .7 }); } c.restore(); }
-  ink(T(lidU), O(30, 22), { key: 'elid', taper: [.2, .35] }); ink(T(G.eyeL), O(14, 11), { key: 'elow', alpha: (1 - close) * .9 }); ink(T(G.brow), O(16, 12), { key: 'ebrw', alpha: .8 });
-  if (lt < .5) moon(ex, ey, lerp(O(240, 260), ir * s * 1.05, easeOut(lt / .5)), 1, 1 - lt / .5);
+  ink(T(lidU), O(30, 22), { key: 'elid', taper: [.2, .35], alpha: eyeIn }); ink(T(G.eyeL), O(14, 11), { key: 'elow', alpha: (1 - close) * .9 * eyeIn }); ink(T(G.brow), O(16, 12), { key: 'ebrw', alpha: .8 * eyeIn });
+  if (lt < 1.3) moon(ex, ey, lerp(O(240, 260), ir * s * 1.05, easeIO(lt / 1.3)), 1, 1 - easeIn(lt / 1.3));
   nightLyr();
 }
 // ---------- shrink: the shut lid becomes the horizon; a stain pushes him back ----------
@@ -326,7 +328,7 @@ function shotTurn(t, lt, d) {
 }
 // ---------- her gaze; the kind lie runs out; into the inverted print ----------
 function shotGaze(t, lt, d) {
-  plate('night'); glow(O(960, 540), O(420, 880), O(700, 800), '#FFB45E', .16);
+  plate('night'); glow(O(960, 540), O(420, 880), O(700, 800), '#FFB45E', .16); eyesLamp(easeOut(seg(lt, .2, 1.4)) * (1 - .6 * easeIO(seg(t, 200.6, 202.6))));
   const P = R1POS(), close = easeIO(seg(t, 200.6, 201.6)) * (1 - easeIO(seg(t, 202.4, 203.0)));
   const hin = easeIO(seg(lt, .4, 1.6));
   figure({ who: 'her', x: P.her[0], y: P.her[1], s: P.her[2], dir: 1, tilt: .02, blink: max(close, blinkAt(t, [199.4])), look: .3 });

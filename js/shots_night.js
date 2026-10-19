@@ -1,4 +1,4 @@
-/* shots_night.js — 0:56–1:26  lamps go out → split halves → unfinished circle → phone cord → dawn wire → smile masks melt → cheap balloon → eyes (→ Riso).
+/* shots_night.js — 0:56–1:26  lamps go out → split halves → unfinished circle → phone cord → dawn wire → smile masks melt → reflection in a puddle → eyes (→ Riso).
    Bridges: exit light = last bulb; lamp cord = split line; halves = half-discs; circle line = phone cord; cord = dawn wire;
    clouds = masks; drips = puddle → balloon; deflated coral = her sweater; her eye/faces = Riso R1 silhouettes. */
 'use strict';
@@ -17,15 +17,15 @@ function himUnderLamp(t, a = 1) {
 }
 function shotLamps(t, lt, d) {
   plate('night');
-  const last = LAMPS()[4], z = kf(lt, [[0, 7], [.75, 1]], easeOut), bx = last[0], by = last[1] + 60;
+  const last = LAMPS()[4], z = kf(lt, [[0, 7], [1.2, 1]], easeOut), bx = last[0], by = last[1] + 60;
   withCam(lerp(CX(), bx, clamp((z - 1) / 2)), lerp(CY(), by, clamp((z - 1) / 2)), z, () => { lampsScene(t); himUnderLamp(t); });
-  const w = 1 - easeOut(seg(lt, 0, .35)); if (w > 0) fillAll('#F6E2B4', w);
+  const w = 1 - easeOut(seg(lt, 0, .6)); if (w > 0) fillAll('#F6E2B4', w);
   X.dark = true; X.lyr = {};
 }
 // ---------- the split: lamp cord drops to the floor = the line between two halves ----------
 const SPLIT = () => X.L ? { x: 960, her: [600, 430, 330], him: [1330, 420, 345] } : { x: 540, her: [330, 720, 300], him: [760, 1150, 300] };
 function splitScene(t, lt) {
-  const c = X.ctx, S = SPLIT(), V0 = X.VIS, L = X.L, open = ease(seg(lt, .45, 1.3));
+  const c = X.ctx, S = SPLIT(), V0 = X.VIS, L = X.L, open = ease(seg(lt, .9, 1.9));
   // left: amber (her · 憧憬)   right: night (him · 回忆)
   c.save(); c.beginPath(); c.rect(V0.x0 - 40, V0.y0 - 40, S.x - V0.x0 + 40, V0.y1 - V0.y0 + 80); c.clip();
   plate('night'); plate('amber', { alpha: open });
@@ -35,25 +35,25 @@ function splitScene(t, lt) {
   c.restore();
   c.save(); c.beginPath(); c.rect(S.x, V0.y0 - 40, V0.x1 - S.x + 40, V0.y1 - V0.y0 + 80); c.clip();
   plate('night'); const mk = kf(t, [[61.3, 0], [61.8, 1]]);
-  figure({ who: 'him', x: S.him[0], y: S.him[1], s: S.him[2], dir: -1, tilt: -.05 + .05 * mk, blink: blinkAt(t, [60.2]) * 1 + mk * .55, brow: .4 });
+  figure({ who: 'him', x: S.him[0], y: S.him[1], s: S.him[2], dir: -1, tilt: -.05 + .05 * mk, blink: blinkAt(t, [60.2]) * 1 + mk * .55, brow: .4, alpha: ease(seg(lt, .95, 1.7)) });
   // memory: faint lamp ghosts on his side
   for (let i = 0; i < 3; i++) glow(S.x + (i + 1) * O(200, 130), O(160, 380) + i * 40, 60, '#C47A3A', .25 * mk);
   c.restore();
   // the cord = the split
-  const drop = easeIn(seg(lt, 0, .55)), y1 = lerp(LAMPS()[4][1], V0.y1 + 30, drop);
+  const drop = easeIn(seg(lt, .5, 1.1)), y1 = lerp(LAMPS()[4][1], V0.y1 + 30, drop);
   ink([[S.x + 1, V0.y0 - 30], [S.x, (V0.y0 + y1) / 2], [S.x + 1, y1]], 2.4, { col: open > .5 ? ZX.ink : ZX.inkNight, key: 'splitcord', taper: [0, 0] });
 }
 function shotSplit(t, lt, d) {
   const S = SPLIT(), c = X.ctx, V0 = X.VIS;
-  // first 0.5 s: the last lamp slides to the centre and lets go of its cord
-  if (lt < .55) {
-    plate('night'); const k = easeIO(seg(lt, 0, .5)), L0 = LAMPS()[4], lx = lerp(L0[0], S.x, k), ly = lerp(L0[1], L0[1] - 260, easeIn(seg(lt, .2, .55)));
-    lamp(lx, ly, 1 - seg(lt, .2, .5), 0, O(1, 1.1), V0.y0 - 20); lightCone(lx, ly + 60, 110, O(900, 820), O(1100, 1500), '#FFC27A', .8 * (1 - seg(lt, 0, .4)));
-    himUnderLamp(t, 1 - seg(lt, 0, .4));
-    const y1 = lerp(ly, V0.y1 + 30, easeIn(seg(lt, .25, .55))); ink([[lx + 1, V0.y0 - 30], [lx, (V0.y0 + y1) / 2], [lx, y1]], 2.4, { col: ZX.inkNight, key: 'splitcord' });
+  // first 1.1 s: the last lamp slides to the centre and lets go of its cord
+  if (lt < 1.1) {
+    if (lt >= .9) splitScene(t, lt); else plate('night'); const k = easeIO(seg(lt, 0, .9)), L0 = LAMPS()[4], lx = lerp(L0[0], S.x, k), ly = lerp(L0[1], L0[1] - 260, easeIn(seg(lt, .5, 1.1)));
+    c.save(); c.globalAlpha *= 1 - easeIn(seg(lt, .75, 1.1)); lamp(lx, ly, 1 - seg(lt, .45, 1.0), 0, O(1, 1.1), V0.y0 - 20); c.restore(); lightCone(lx, ly + 60, 110, O(900, 820), O(1100, 1500), '#FFC27A', .8 * (1 - seg(lt, 0, .9)));
+    himUnderLamp(t, 1 - seg(lt, 0, .9));
+    const y1 = lerp(ly, V0.y1 + 30, easeIn(seg(lt, .5, 1.1))); ink([[lx + 1, V0.y0 - 30], [lx, (V0.y0 + y1) / 2], [lx, y1]], 2.4, { col: ZX.inkNight, key: 'splitcord' });
   } else {
-    // last 0.9 s: the frame closes into a disc (the circle shot starts from it)
-    const k = easeIO(seg(lt, d - .9, d));
+    // last 1.4 s: the frame closes into a disc (the circle shot starts from it)
+    const k = easeIO(seg(lt, d - 1.4, d));
     if (k <= 0) splitScene(t, lt);
     else { plate('night'); fillAll(ZX.inkNight, .45 * k); const R = lerp(hypot(V0.x1 - V0.x0, V0.y1 - V0.y0) * .6, CIRC_R(), k), cy = CIRC_Y();
       c.save(); c.beginPath(); c.arc(S.x, lerp(CY(), cy, k), R, 0, TAU); c.clip(); camAt(S.x, lerp(CY(), cy, k), lerp(1, CIRC_Z(), k), () => splitScene(t, lt)); c.restore(); }
@@ -92,7 +92,7 @@ function handset(x, y, ang, s) {   // classic handset, earpiece + mouthpiece bul
 function shotPhone(t, lt, d) {
   const c = X.ctx, S = SPLIT(), R = CIRC_R() + 26, cy = CIRC_Y(), V0 = X.VIS;
   plate('night'); fillAll(ZX.inkNight, .45 * (1 - seg(lt, 0, .8)));
-  const m = easeIO(seg(lt, 0, .9)), C = cordPath(t), N = C.length - 1, P = [];
+  const m = easeIO(seg(lt, 0, 1.4)), C = cordPath(t), N = C.length - 1, P = [];
   for (let i = 0; i <= N; i++) { const a = -PI / 2 + i / N * TAU * .93, q = [S.x + cos(a) * R, cy + sin(a) * R]; P.push([lerp(q[0], C[i][0], m), lerp(q[1], C[i][1], m)]); }
   const pan = easeIn(seg(lt, d - .8, d)) * O(900, 1300);
   c.save(); c.translate(0, pan);
@@ -158,38 +158,48 @@ function shotMasks(t, lt, d) {
   X.dark = true; X.lyr = {};
 }
 // ---------- balloon: the mud drips gather; cheap happiness inflates in her colour and goes flat ----------
-const BAL = () => X.L ? { x: 760, y0: 960, y: 420, r: 190 } : { x: 540, y0: 1700, y: 760, r: 220 };
+const BAL = () => X.L ? { x: 760, y0: 850, y: 420, r: 190 } : { x: 420, y0: 1470, y: 760, r: 220 };
 const POP_T = 78.6;
-function shotBalloon(t, lt, d) {
+function shotPuddle(t, lt, d) {
   const c = X.ctx, B = BAL(), V0 = X.VIS;
   plate('dawn'); fillAll('#3A3D4A', .25);
   // drips falling from the masks gather into the puddle
   const fall = seg(lt, 0, .9), pos = MASKS();
   if (fall < 1) { c.save(); c.globalAlpha = 1 - easeIn(fall); dawnClouds(t, 1, 1); for (const [x, y, ss] of pos) cloud(x, y, ss, '#5A4430', .95, 'mm' + x); c.restore(); }
-  if (fall < 1) pos.forEach(([x, y, s], i) => { for (let j = 0; j < 5; j++) { const dx = (j - 2) * 52 * s, px = lerp(x + dx, B.x + (j - 2) * 30, easeIn(fall)), py = lerp(y + 300 * s, B.y0, easeIn(fall));
-    wash(ellP(px, py, 9, 16, 12), '#5A4430', { tex: .5, alpha: 1 - fall }); } });
-  const pud = ease(seg(lt, .5, 1.1)), inf = backOut(seg(lt, 1.0, 2.0)), pop = seg(t, POP_T, POP_T + .9), V = 1 - easeIn(pop);
-  const r = B.r * inf * lerp(1, .32, easeIn(pop)), by = lerp(B.y0, B.y, ease(seg(lt, 1.0, 2.2))) + easeIn(pop) * (B.y0 - B.y) * .9 + sin(t * 1.6) * 8 * V;
-  if (inf <= 0) wash(ellP(B.x, B.y0, 160 * pud, 26 * pud, 26), mixCol('#5A4430', ZX.coral, pud), { tex: .7 });
-  else {
-    // string + price tag
-    const sx = B.x, sy = by + r * 1.05, ex = B.x + sin(t * 1.3) * 26, ey = B.y0 + 30;
-    ink([[sx, sy], [lerp(sx, ex, .5) + 12, (sy + ey) / 2], [ex, ey]], 1.8, { key: 'bstr' });
-    const tagA = seg(t, 77.58, 77.9); if (tagA > 0) { c.save(); c.globalAlpha = tagA; priceTag(lerp(sx, ex, .55) + 16, lerp(sy, ey, .55), .25 + sin(t * 2) * .08, '¥0.99', O(1, 1.15)); c.restore(); }
-    const shp = ellP(B.x, by, r * (1 + .04 * sin(t * 3)) * lerp(1, 1.25, easeIn(pop)), r * 1.08 * lerp(1, .55, easeIn(pop)), 36);
-    shape(shp, ZX.coral, { key: 'bal', lw: 3.4, tex: .85 });
-    if (V > .2) { c.save(); c.globalAlpha = .55 * V; wash(ellP(B.x - r * .38, by - r * .45, r * .16, r * .26, 18, -.5), ZX.cream, { tex: .3, edge: 0 }); c.restore(); }
-    shape([[B.x - 12, by + r * 1.06], [B.x + 12, by + r * 1.06], [B.x, by + r * 1.06 - 16]], ZX.coral, { key: 'knot', lw: 2 });
+  if (fall < 1) { c.save(); c.globalAlpha = 1 - easeOut(seg(lt, 0, .6)); const tips = maskDrips(t, pos, 1 - .6 * easeIn(seg(lt, 0, .6))); c.restore();
+    const full = []; pos.forEach(([x, y, s], i) => { for (let j = 0; j < 5; j++) full.push([x + (j - 2) * 52 * s + hash(i * 5 + j) * 20, y + 30 * s + (80 + 220 * hash(i * 7 + j)) * s]); });
+    full.forEach(([x, y], k) => { const j = k % 5, px = lerp(x, B.x + (j - 2) * 30, easeIn(fall)), py = lerp(y, B.y0, easeIn(fall)); wash(ellP(px, py, 9, lerp(22, 14, fall), 12), '#5A4430', { tex: .5, alpha: 1 - fall }); }); }
+  // 快乐过廉价的快乐: no sun in the sky — only its reflection in a puddle of mud. A single drop breaks it.
+  const pud = ease(seg(lt, .5, 1.2)) * (1 - easeIn(seg(t, 79.0, 79.5))), RX = O(380, 250), RY = O(74, 70);
+  const bloom = easeOut(seg(lt, 1.0, 2.2)), shim = seg(t, 77.58, 78.0) * (1 - seg(t, POP_T, POP_T + .3)), sh = easeOut(seg(t, POP_T, POP_T + .7)), gat = easeIO(seg(t, POP_T + .45, 79.5));
+  if (pud > 0) { const E = ellP(B.x, B.y0, RX * pud, RY * pud, 36); wash(E, '#4A3A2C', { tex: .9, edge: .35, edgeW: 10 }); ink(E.slice(18, 37), 1.6, { col: '#2E2219', key: 'pudr', alpha: .7 * pud }); }
+  const SR = O(150, 120) * bloom, SY = SR * .42;
+  if (bloom > 0) {
+    c.save(); pathOf(c, ellP(B.x, B.y0, RX * max(pud, .001), RY * max(pud, .001), 36), true); if (gat < .01) c.clip();
+    glow(B.x, B.y0, SR * 2.4, '#FFB45E', .35 * bloom * (1 - sh * .7));
+    const N = 9; for (let i = 0; i < N; i++) {
+      const y0 = B.y0 - SY + i * 2 * SY / N, dx = shim * sin(t * 7 + i * 1.7) * 10 + sh * (hash(i * 3.1) - .5) * RX * 1.7 * (1 - gat);
+      const dy = sh * (hash(i * 1.7) - .5) * RY * .8 * (1 - gat), gx = lerp(dx, 0, gat), sc2 = lerp(1, B.r * .4 / max(SR, 1), gat);
+      c.save(); c.beginPath(); c.rect(B.x - RX * 2, B.y0 + (y0 - B.y0) * sc2 + dy - .5, RX * 4, 2 * SY / N * sc2 + 1); c.clip();
+      wash(ellP(B.x + gx, B.y0 + dy, SR * sc2 * (1 + .05 * shim * sin(t * 9 + i)), lerp(SY, B.r * .4 * .6, gat), 30), ZX.coral, { tex: .75, edge: .15, alpha: lerp(.92 - .25 * sh, 1, gat) }); c.restore(); }
+    c.restore();
+    ink(ellP(B.x, B.y0 + SY * 1.6, SR * .7, 3, 12).slice(0, 7), 1.4, { col: ZX.cream, key: 'glint', alpha: .5 * bloom * (1 - sh) });
   }
+  // the drop
+  const df = seg(t, POP_T - .55, POP_T); if (df > 0 && df < 1) { const y = lerp(V0.y0 - 30, B.y0, easeIn(df)); wash(ellP(B.x + 6, y, 7, 15, 12), '#2E2219', { tex: .3, edge: 0, alpha: .85 }); }
+  for (let j = 0; j < 3; j++) { const u = seg(t, POP_T + j * .18, POP_T + j * .18 + 1.1); if (u > 0 && u < 1) ink(ellP(B.x + 6, B.y0, RX * .15 + u * RX * .95, (RY * .15 + u * RY * .95), 40).slice(0, 41), 1.8, { col: ZX.cream, key: 'pr' + j, alpha: (1 - u) * .7 * pud }); }
   // he watches it rise and fall (L: right; P: bottom)
   const mv = easeIO(seg(lt, 0, 1.1)); figure({ who: 'him', x: lerp(O(960, 540), O(1430, 760), mv), y: lerp(O(560, 1180), O(520, 1300), mv), s: lerp(300, O(290, 260), mv), dir: -1, tilt: lerp(.08, kf(lt, [[1, -.05], [2.2, -.22], [3.0, -.22], [3.8, .12]]), mv), brow: .5, blink: blinkAt(t, [76.4, 79.0]), look: .4 });
   X.dark = true; X.lyr = {};
 }
 // ---------- eyes: the last of the coral is her sweater; two faces, a gaze, a kind lie (→ Riso) ----------
 const R1POS = () => X.L ? { her: [712, 392, 400], him: [1222, 377, 420] } : { her: [330, 1200, 300], him: [770, 1225, 310] };   // portrait: faces in the lower half, type stacked above
+// portrait: the one lamp left on at 0:58 hangs above them and fills the upper half with its cone
+function eyesLamp(a) { if (X.L || a <= 0) return; const V0 = X.VIS, y = V0.y0 + 330;
+  glow(540, y + 90, 760, '#FFB45E', .25 * a); lightCone(540, y + 84, 150, 1000, 1000, '#FFC27A', .6 * a); lamp(540, y, a, 1 - a, 1.45, V0.y0 - 20); }
 function shotEyes(t, lt, d) {
   const c = X.ctx, P = R1POS(), B = BAL();
-  plate('night'); glow(O(960, 540), O(420, 880), O(700, 800), '#FFB45E', .22);
+  plate('night'); glow(O(960, 540), O(420, 880), O(700, 800), '#FFB45E', .22); eyesLamp(easeOut(seg(lt, .5, 1.4)));
   const push = 1 + .06 * ease(seg(lt, 0, d)), cx = O(967, 550), cy = O(420, 880);
   withCam(cx, cy, push, () => {
     figure({ who: 'her', x: P.her[0], y: P.her[1], s: P.her[2], dir: 1, tilt: .02, blink: blinkAt(t, [80.6, 84.2]), look: .2 });
